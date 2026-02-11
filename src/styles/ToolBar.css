@@ -1,0 +1,78 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background-color: var(--editor-bg);
+  border-bottom: 1px solid var(--border-color);
+  flex-wrap: wrap;
+}
+
+.toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--editor-fg);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.toolbar-btn:hover {
+  background-color: var(--item-hover-bg);
+  border-color: var(--border-color);
+}
+
+.toolbar-btn:active {
+  background-color: var(--item-active-bg);
+  border-color: var(--border-color);
+}
+
+.toolbar-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.toolbar-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.toolbar-btn img {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+/* 暗いテーマ: 白く表示 */
+.theme-vs-dark .toolbar-btn img,
+.theme-moonlight .toolbar-btn img,
+.theme-katana .toolbar-btn img {
+  filter: brightness(0) saturate(100%) invert(1);
+}
+
+/* 明るいテーマ: 黒く表示 */
+.theme-light .toolbar-btn img,
+.theme-organic-note .toolbar-btn img,
+.theme-nagaragawa .toolbar-btn img {
+  filter: brightness(0) saturate(100%);
+}
+
+.toolbar-btn.active {
+  background-color: var(--item-selected-bg);
+  border-color: var(--accent-color);
+}
+
+.toolbar-separator {
+  width: 1px;
+  height: 24px;
+  background-color: var(--border-color);
+  margin: 0 4px;
+  flex-shrink: 0;
+}

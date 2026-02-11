@@ -1,0 +1,478 @@
+.theme-customizer {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  background-color: var(--editor-bg, #f9f9f9);
+  color: var(--editor-fg, #1e1e1e);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  gap: 0;
+  flex-direction: column;
+}
+
+/* 下部フッター用の余白を確保 */
+.theme-customizer {
+  position: relative;
+  padding-bottom: 64px; /* フッター高さ分の余白 */
+}
+
+.theme-customizer.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+/* 左側パネル */
+.customizer-left {
+  width: 420px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border-color, #e0e0e0);
+  background-color: var(--sidebar-bg, #ffffff);
+  overflow-y: auto;
+  gap: 0;
+}
+
+/* ツールバー（タイトル帯のすぐ下に表示） */
+.theme-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 32px; /* align with settings content padding */
+  background: var(--sidebar-bg, #ffffff);
+  border-bottom: 1px solid var(--border-color, #e0e0e0);
+  box-sizing: border-box;
+  overflow-x: auto;
+}
+
+.theme-toolbar .btn {
+  min-width: 8em;
+  max-width: 12em;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.theme-toolbar label.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* セクション */
+.customizer-section {
+  padding: 20px;
+  border-bottom: 1px solid var(--border-color, #e0e0e0);
+}
+
+.customizer-section h3 {
+  margin: 0 0 14px 0;
+  font-size: 0.95em;
+  font-weight: 500;
+  color: var(--editor-fg, #1e1e1e);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* テーマドロップダウン */
+.theme-dropdown-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.theme-dropdown {
+  padding: 10px 12px;
+  background-color: var(--item-selected-bg, #ffffff);
+  color: var(--editor-fg, #1e1e1e);
+  border: 1px solid var(--border-color, #c5c5c5);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.theme-dropdown:hover {
+  background-color: var(--item-hover-bg, #f9f9f9);
+  border-color: var(--border-color-hover, #a0a0a0);
+}
+
+.theme-dropdown:focus {
+  outline: none;
+  border-color: var(--accent-color, #0078d4);
+  box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.1);
+}
+
+/* カラーピッカーグリッド */
+.color-picker-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  padding-right: 4px;
+}
+
+.color-picker-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.color-picker-item label {
+  font-size: 0.9em;
+  color: var(--editor-fg, #1e1e1e);
+  font-weight: 500;
+}
+
+.color-input-wrapper {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.color-picker {
+  width: 40px;
+  height: 40px;
+  border: 1px solid #c5c5c5;
+  border-radius: 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.color-picker:hover {
+  border-color: var(--accent-color, #0078d4);
+  box-shadow: 0 2px 6px rgba(0, 120, 212, 0.2);
+}
+
+.color-text {
+  flex: 1;
+  padding: 8px 10px;
+  background-color: var(--item-selected-bg, #ffffff);
+  color: var(--editor-fg, #1e1e1e);
+  border: 1px solid var(--border-color, #c5c5c5);
+  border-radius: 6px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85em;
+  text-transform: uppercase;
+  transition: all 0.15s ease;
+}
+
+.color-text:focus {
+  outline: none;
+  border-color: var(--accent-color, #0078d4);
+  box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.1);
+}
+
+/* ボタン */
+.customizer-actions {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid var(--border-color, #e0e0e0);
+  background-color: var(--sidebar-bg, #ffffff);
+}
+
+.btn {
+  padding: 10px 16px;
+  border: 1px solid;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.9em;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background-color: var(--item-selected-bg, #ffffff);
+}
+
+.btn:hover {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-preview {
+  border-color: var(--accent-color, #0078d4);
+  color: var(--accent-color, #0078d4);
+}
+
+.btn-preview:hover:not(:disabled) {
+  background-color: var(--item-hover-bg, #f3f3f3);
+  border-color: #005a9e;
+}
+
+.btn-save {
+  border-color: #107c10;
+  color: #107c10;
+}
+
+.btn-save:hover:not(:disabled) {
+  background-color: var(--item-hover-bg, #f3f3f3);
+  border-color: #0a6d0a;
+}
+
+.btn-delete {
+  border-color: #d13438;
+  color: #d13438;
+}
+
+.btn-delete:hover:not(:disabled) {
+  background-color: var(--item-hover-bg, #f3f3f3);
+  border-color: #a4373a;
+}
+
+.btn-sm {
+  padding: 8px 12px;
+  font-size: 0.85em;
+}
+
+.btn-confirm {
+  border-color: #107c10;
+  color: #107c10;
+  flex: 1;
+}
+
+.btn-confirm:hover:not(:disabled) {
+  background-color: #f3f3f3;
+  border-color: #0a6d0a;
+}
+
+.btn-confirm-yes {
+  border-color: #107c10;
+  color: #107c10;
+}
+
+.btn-confirm-yes:hover:not(:disabled) {
+  background-color: #f3f3f3;
+  border-color: #0a6d0a;
+}
+
+.btn-confirm-no {
+  border-color: var(--border-color, #c5c5c5);
+  color: var(--editor-fg, #1e1e1e);
+}
+
+.btn-confirm-no:hover:not(:disabled) {
+  background-color: var(--item-hover-bg, #f3f3f3);
+  border-color: var(--border-color-hover, #a0a0a0);
+}
+
+.btn-cancel {
+  border-color: var(--border-color, #c5c5c5);
+  color: var(--editor-fg, #1e1e1e);
+  flex: 1;
+}
+
+.btn-cancel:hover:not(:disabled) {
+  background-color: var(--item-hover-bg, #f3f3f3);
+  border-color: var(--border-color-hover, #a0a0a0);
+}
+
+/* 削除確認 */
+.delete-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  background-color: #fee8e8;
+  border: 1px solid #d13438;
+  border-radius: 6px;
+  animation: slideIn 0.2s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.confirm-text {
+  font-size: 0.9em;
+  color: #d13438;
+  font-weight: 500;
+  text-align: center;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-confirm-yes {
+  background-color: #d13438;
+  color: white;
+  flex: 1;
+}
+
+.btn-confirm-yes:hover:not(:disabled) {
+  background-color: #a4373a;
+  border-color: #a4373a;
+}
+
+.btn-confirm-no {
+  background-color: var(--item-selected-bg, #ffffff);
+  color: var(--editor-fg, #1e1e1e);
+  flex: 1;
+  border-color: var(--border-color, #c5c5c5);
+}
+
+.btn-confirm-no:hover:not(:disabled) {
+  background-color: var(--item-hover-bg, #f3f3f3);
+  border-color: var(--border-color-hover, #a0a0a0);
+}
+
+/* 保存ダイアログ */
+.save-dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.save-dialog-content {
+  background-color: var(--sidebar-bg, #ffffff);
+  border: 1px solid var(--border-color, #e0e0e0);
+  border-radius: 10px;
+  padding: 24px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+.save-dialog-content h4 {
+  margin: 0 0 14px 0;
+  font-size: 0.95em;
+  font-weight: 500;
+  color: var(--editor-fg, #1e1e1e);
+}
+
+.save-input {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 16px;
+  background-color: var(--item-selected-bg, #ffffff);
+  color: var(--editor-fg, #1e1e1e);
+  border: 1px solid var(--border-color, #c5c5c5);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.9em;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
+}
+
+.save-input:focus {
+  outline: none;
+  border-color: var(--accent-color, #0078d4);
+  box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.1);
+}
+
+.save-dialog-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* 右側プレビュー */
+.customizer-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 固定フッター */
+.theme-footer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  background: var(--sidebar-bg, #ffffff);
+  border-top: 1px solid var(--border-color, #e0e0e0);
+  box-sizing: border-box;
+  z-index: 10;
+}
+
+.theme-footer .footer-text {
+  font-size: 0.9em;
+  color: var(--editor-fg, #1e1e1e);
+}
+
+.preview-header {
+  padding: 14px 18px;
+  background-color: var(--sidebar-bg, #ffffff);
+  border-bottom: 1px solid var(--border-color, #e0e0e0);
+  font-size: 0.85em;
+  font-weight: 500;
+  color: var(--editor-fg, #1e1e1e);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.customizer-right > div:last-child {
+  flex: 1;
+  overflow: hidden;
+}
+
+/* スクロールバーのカスタマイズ */
+.customizer-left::-webkit-scrollbar,
+.color-picker-grid::-webkit-scrollbar {
+  width: 8px;
+}
+
+.customizer-left::-webkit-scrollbar-track,
+.color-picker-grid::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+.customizer-left::-webkit-scrollbar-thumb,
+.color-picker-grid::-webkit-scrollbar-thumb {
+  background-color: var(--border-color, #c5c5c5);
+  border-radius: 4px;
+}
+
+.customizer-left::-webkit-scrollbar-thumb:hover,
+.color-picker-grid::-webkit-scrollbar-thumb:hover {
+  background-color: var(--accent-color, #0078d4);
+}
+
+/* レスポンシブ */
+@media (max-width: 1000px) {
+  .theme-customizer {
+    flex-direction: column;
+  }
+
+  .customizer-left {
+    width: 100%;
+    height: 50%;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color, #e0e0e0);
+  }
+
+  .customizer-right {
+    height: 50%;
+  }
+}

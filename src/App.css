@@ -1,0 +1,128 @@
+#root {
+  /* max-width: 90%; */
+  margin: 0 auto;
+  /* padding: 2rem; */ 
+  text-align: center;
+}
+
+h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.editor-container {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  overflow: hidden;
+  height: 80vh; /* エディタの高さを調整 */
+}
+
+.editor-and-preview-wrapper {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  gap: 0;
+}
+
+.editor-section {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  transition: flex 0.3s ease;
+}
+
+.markdown-preview-container {
+  flex: 0 1 50%;
+  overflow-y: auto;
+  border-left: 1px solid var(--border-color, #e0e0e0);
+  padding: 20px;
+  background-color: var(--editor-bg, #ffffff);
+  min-width: 300px;
+}
+
+.toggle-preview-btn {
+  padding: 6px 12px;
+  background-color: var(--item-selected-bg, #ffffff);
+  color: var(--accent-color, #0078d4);
+  border: 1px solid var(--border-color, #c5c5c5);
+  border-radius: 4px;
+  font-size: 0.85em;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.toggle-preview-btn:hover {
+  background-color: var(--item-hover-bg, #f5f5f5);
+  border-color: var(--border-color-hover, #a0a0a0);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.toggle-preview-btn:active {
+  background-color: var(--item-active-bg, #ececec);
+  border-color: var(--border-color-active, #919191);
+}
+
+/* github-markdown-css のカスタマイズ */
+.markdown-body {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--editor-fg, #1e1e1e);
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+  color: var(--editor-fg, #1e1e1e);
+  border-bottom-color: var(--border-color, #e0e0e0);
+}
+
+.markdown-body code {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--dialogue-color, #d4d4d4);
+  border-radius: 3px;
+  padding: 2px 6px;
+}
+
+.markdown-body pre {
+  background-color: rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-color, #e0e0e0);
+  border-radius: 6px;
+  padding: 12px;
+  overflow-x: auto;
+}
+
+.markdown-body blockquote {
+  border-left-color: var(--accent-color, #0078d4);
+  color: var(--editor-fg-secondary, #666666);
+}
+
+.markdown-body table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.markdown-body table th,
+.markdown-body table td {
+  border: 1px solid var(--border-color, #e0e0e0);
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.markdown-body table tr:nth-child(even) {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.markdown-body a {
+  color: var(--accent-color, #0078d4);
+  text-decoration: none;
+}
+
+.markdown-body a:hover {
+  text-decoration: underline;
+}
