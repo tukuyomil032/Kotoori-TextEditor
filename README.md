@@ -4,7 +4,7 @@
 
 **言葉を織って文と成す -ことおり(言織)-**　です。
 
-[Windows用インストーラー Kotoori.Setup.1.0.3.exe](https://github.com/kermount-dev/Kotoori-TextEditor/releases/download/v1.0.3/Kotoori.Setup.1.0.3.exe "Kotoori.Setup.1.0.3.exe")
+[Windows用インストーラー Kotoori.Setup.1.0.4.exe](https://github.com/kermount-dev/Kotoori-TextEditor/releases/download/v1.0.4/Kotoori.Setup.1.0.4.exe "Kotoori.Setup.1.0.4.exe")
 
 VS Codeと同じテキストエディタエンジン(Monaco Editor)を使いつつ、 **コードスニペットや拡張機能に対応しない** ことで軽量かつ迷わない操作性を実現しています。
 
