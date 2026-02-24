@@ -23,6 +23,9 @@ interface MenuBarProps {
   theme?: string;
 }
 
+const isMacOS =
+  typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.userAgent);
+
 const MenuBar: React.FC<MenuBarProps> = ({
   onMenuClick,
   checkedItems = {},
@@ -34,7 +37,7 @@ const MenuBar: React.FC<MenuBarProps> = ({
     Array<{ id: number; path: string; is_alive?: number }>
   >([]);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
-  const { isMaximized, minimize, toggleMaximize, close } = useTauriWindow();
+  const { isMaximized, minimize, toggleMaximize, close, startDragging } = useTauriWindow();
   const menuRef = useRef<HTMLDivElement>(null);
 
   // タイトルが長い場合は短縮する
@@ -307,17 +310,29 @@ const MenuBar: React.FC<MenuBarProps> = ({
     close();
   };
 
+  // ボタン等のインタラクティブ要素以外の場所でマウスを押したらウィンドウドラッグ開始
+  const handleMenuBarMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
+    const target = e.target as HTMLElement;
+    if (target.closest('button, input, select, a, [role="button"]')) return;
+    startDragging();
+  };
+
   return (
     <div
       ref={menuRef}
-      className={`menubar theme-${theme}`}
+      className={`menubar theme-${theme}${isMacOS ? ' menubar-macos' : ''}`}
       onDoubleClick={handleDoubleClick}
-      data-tauri-drag-region
+      onMouseDown={handleMenuBarMouseDown}
     >
-      {/* アプリアイコン（左側） */}
-      <div className="menubar-app-icon">
-        <img src={appIcon} alt="Kotoori" title="Kotoori" />
-      </div>
+      {/* macOS: 信号ボタン用スペーサー / Windows: アプリアイコン */}
+      {isMacOS ? (
+        <div className="menubar-traffic-light-spacer" />
+      ) : (
+        <div className="menubar-app-icon">
+          <img src={appIcon} alt="Kotoori" title="Kotoori" />
+        </div>
+      )}
 
       {/* メニューバー */}
       <div className="menubar-menus">
@@ -453,26 +468,30 @@ const MenuBar: React.FC<MenuBarProps> = ({
         <span>{displayTitle}</span>
       </div>
 
-      {/* ウィンドウコントロールボタン（右側） */}
-      <div className="menubar-window-controls">
-        <button
-          className="menubar-control-btn minimize-btn"
-          onClick={handleMinimize}
-          title="最小化"
-        >
-          <Minus size={16} />
-        </button>
-        <button
-          className="menubar-control-btn maximize-btn"
-          onClick={handleMaximize}
-          title={isMaximized ? '復元' : '最大化'}
-        >
-          {isMaximized ? <Copy size={16} /> : <Square size={16} />}
-        </button>
-        <button className="menubar-control-btn close-btn" onClick={handleClose} title="閉じる">
-          <X size={16} />
-        </button>
-      </div>
+      {/* Windows のみカスタム ウィンドウコントロールを表示 / macOS は右スペーサーでドラッグ領域を確保 */}
+      {isMacOS ? (
+        <div className="menubar-drag-spacer-right" />
+      ) : (
+        <div className="menubar-window-controls">
+          <button
+            className="menubar-control-btn minimize-btn"
+            onClick={handleMinimize}
+            title="最小化"
+          >
+            <Minus size={16} />
+          </button>
+          <button
+            className="menubar-control-btn maximize-btn"
+            onClick={handleMaximize}
+            title={isMaximized ? '復元' : '最大化'}
+          >
+            {isMaximized ? <Copy size={16} /> : <Square size={16} />}
+          </button>
+          <button className="menubar-control-btn close-btn" onClick={handleClose} title="閉じる">
+            <X size={16} />
+          </button>
+        </div>
+      )}
     </div>
   );
 };

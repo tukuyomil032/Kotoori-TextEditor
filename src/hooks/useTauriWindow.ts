@@ -17,6 +17,7 @@ export interface UseTauriWindowReturn {
   minimize: () => Promise<void>;
   toggleMaximize: () => Promise<void>;
   close: () => Promise<void>;
+  startDragging: () => Promise<void>;
 }
 
 /**
@@ -53,6 +54,10 @@ export function useTauriWindow(): UseTauriWindowReturn {
     };
   }, []);
 
+  const startDragging = useCallback(async () => {
+    await getCurrentWindow().startDragging();
+  }, []);
+
   const minimize = useCallback(async () => {
     await minimizeWindow();
   }, []);
@@ -66,7 +71,7 @@ export function useTauriWindow(): UseTauriWindowReturn {
     await closeWindow();
   }, []);
 
-  return { isMaximized, minimize, toggleMaximize, close };
+  return { isMaximized, minimize, toggleMaximize, close, startDragging };
 }
 
 /**

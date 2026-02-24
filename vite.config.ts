@@ -1,43 +1,42 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import { viteStaticCopy } from 'vite-plugin-static-copy'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import { viteStaticCopy } from 'vite-plugin-static-copy';
+
+const host = process.env.TAURI_DEV_HOST;
 
 // https://vitejs.dev/config/
-export default defineConfig(async () => ({
+export default defineConfig({
   plugins: [
     react(),
     viteStaticCopy({
       targets: [
         {
           src: 'src/assets/icon',
-          dest: 'assets/icon'
-        }
-      ]
-    })
+          dest: 'assets/icon',
+        },
+      ],
+    }),
   ],
-
-  // Vite のポートを tauri.conf.json の devUrl に合わせる
-  server: {
-    port: 1420,
-    strictPort: true,
-    watch: {
-      // src-tauri はウォッチ対象外（Tauri CLIが管理）
-      ignored: ['**/src-tauri/**']
-    }
-  },
-
-  build: {
-    // Tauri が要求する ES2021 以上
-    target: process.env.TAURI_ENV_PLATFORM === 'windows' ? 'chrome105' : 'safari13',
-    // デバッグビルド時はソースマップ有効
-    sourcemap: !!process.env.TAURI_ENV_DEBUG,
-    outDir: 'dist',
-    assetsDir: 'assets'
-  },
 
   clearScreen: false,
 
-  optimizeDeps: {
-    include: ['monaco-editor/esm/vs/editor/editor.worker']
-  }
-}))
+  envPrefix: ['VITE_', 'TAURI_ENV_*'],
+
+  server: {
+    port: 1420,
+    strictPort: true,
+    host: host || false,
+    hmr: host ? { protocol: 'ws', host, port: 1421 } : undefined,
+    watch: {
+      ignored: ['**/src-tauri/**'],
+    },
+  },
+
+  build: {
+    target: process.env.TAURI_ENV_PLATFORM === 'windows' ? 'chrome105' : 'safari13',
+    minify: !process.env.TAURI_ENV_DEBUG ? 'esbuild' : false,
+    sourcemap: !!process.env.TAURI_ENV_DEBUG,
+    outDir: 'dist',
+    assetsDir: 'assets',
+  },
+});

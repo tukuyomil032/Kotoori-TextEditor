@@ -1,6 +1,6 @@
 {
   "productName": "Kotoori",
-  "version": "0.0.0",
+  "version": "1.0.6",
   "identifier": "com.kotoori.app",
   "build": {
     "frontendDist": "../dist",
@@ -16,7 +16,6 @@
         "height": 800,
         "minWidth": 600,
         "minHeight": 400,
-        "decorations": false,
         "hiddenTitle": true,
         "titleBarStyle": "Overlay",
         "acceptFirstMouse": true,
@@ -77,9 +76,6 @@
   "plugins": {
     "sql": {
       "preload": ["sqlite:history.db"]
-    },
-    "window-state": {
-      "stateFlags": "SIZE | POSITION | MAXIMIZED | FULLSCREEN | DECORATIONS | VISIBLE"
     }
   }
 }

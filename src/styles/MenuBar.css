@@ -52,13 +52,29 @@
   display: flex;
   gap: 0;
   -webkit-app-region: drag;
-  margin-right: auto;
 }
 
 .menubar-item {
   position: relative;
   /* ボタンは -webkit-app-region: drag の影響を受けないようにする */
   -webkit-app-region: no-drag;
+}
+
+/* macOS: 信号ボタン (●●●) 用スペーサー */
+.menubar-traffic-light-spacer {
+  width: 72px;
+  min-width: 72px;
+  height: 100%;
+  -webkit-app-region: drag;
+  flex-shrink: 0;
+}
+
+/* macOS: 右側ドラッグ用スペーサー */
+.menubar-drag-spacer-right {
+  flex: 1;
+  height: 100%;
+  min-width: 72px;
+  -webkit-app-region: drag;
 }
 
 /* アプリアイコン（左側） */
@@ -100,7 +116,7 @@
   user-select: none;
   cursor: default;
   max-width: calc(100% - 250px);
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .menubar-title span {

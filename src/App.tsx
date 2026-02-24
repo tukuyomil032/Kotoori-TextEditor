@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Editor, { OnMount, loader } from '@monaco-editor/react';
 import {
   openFileDialog,
@@ -11,6 +11,7 @@ import {
 } from './lib/tauri-api';
 import { useTauriWindow, useTauriCloseRequest } from './hooks/useTauriWindow';
 import * as monaco from 'monaco-editor';
+import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
 import StatusBar from './components/StatusBar';
 import { useEditorSettings } from './hooks/useEditorSettings';
 import { useFileOperations } from './hooks/useFileOperations';
@@ -21,17 +22,14 @@ import MenuBar from './components/MenuBar';
 import MarkdownPreview from './components/MarkdownPreview/MarkdownPreview';
 import ToolBar from './components/ToolBar';
 
-// Monaco Editorをローカルリソースで日本語化するための設定
-loader.config({
-  paths: {
-    vs: './monaco-editor/min/vs',
+// Monaco Web Worker 設定（Vite ?worker でバンドル）
+window.MonacoEnvironment = {
+  getWorker() {
+    return new editorWorker();
   },
-  'vs/nls': {
-    availableLanguages: {
-      '*': 'ja',
-    },
-  },
-});
+};
+// バンドル済み monaco インスタンスを @monaco-editor/react に渡す（CDN ロード不要）
+loader.config({ monaco });
 
 interface EditorStats {
   lines: number;

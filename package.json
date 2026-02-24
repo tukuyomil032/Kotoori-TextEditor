@@ -1,7 +1,7 @@
 {
   "name": "kotoori",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.6",
   "description": "日本語編集に最適化されたデスクトップ向けテキストエディタ（Monaco搭載）",
   "author": "kermount-dev",
   "license": "MIT",
