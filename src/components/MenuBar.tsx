@@ -330,7 +330,13 @@ const MenuBar: React.FC<MenuBarProps> = ({
         <div className="menubar-traffic-light-spacer" />
       ) : (
         <div className="menubar-app-icon">
-          <img src={appIcon} alt="Kotoori" title="Kotoori" />
+          <img
+            src={appIcon}
+            alt="Kotoori"
+            title="Kotoori"
+            onContextMenu={(e) => e.preventDefault()}
+            draggable={false}
+          />
         </div>
       )}
 

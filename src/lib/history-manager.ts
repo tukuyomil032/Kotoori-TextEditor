@@ -164,9 +164,9 @@ export async function getAllFiles(): Promise<FileRecord[]> {
 export async function checkLiveness(): Promise<void> {
   const db = await getHistoryDb();
   const files = await db.select<FileRecord[]>('SELECT id, file_path FROM files WHERE is_alive = 1');
+  const { exists } = await import('@tauri-apps/plugin-fs');
   for (const file of files) {
     try {
-      const { exists } = await import('@tauri-apps/plugin-fs');
       const alive = await exists(file.file_path);
       if (!alive) {
         await db.execute(

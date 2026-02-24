@@ -63,8 +63,14 @@ pub async fn get_unique_file_path(path: String) -> Result<String, String> {
         .unwrap_or_default();
 
     let now = Local::now();
-    let ts = now.format("%Y%m%d%H%M").to_string();
-    let new_path = parent.join(format!("{stem}_{ts}{ext}"));
+    let ts = now.format("%Y%m%d%H%M%S").to_string();
+    let mut new_path = parent.join(format!("{stem}_{ts}{ext}"));
+    // 万が一同一秒に衝突した場合はサフィックスを付加
+    let mut counter = 1u32;
+    while new_path.exists() {
+        new_path = parent.join(format!("{stem}_{ts}_{counter}{ext}"));
+        counter += 1;
+    }
     Ok(new_path.to_string_lossy().into_owned())
 }
 
@@ -139,6 +145,9 @@ fn detect_encoding(bytes: &[u8]) -> String {
 fn decode_bytes(bytes: &[u8], encoding: &str) -> Result<String, String> {
     match encoding {
         "UTF-8-BOM" => {
+            if bytes.len() < 3 {
+                return Err("ファイルが短すぎます (UTF-8-BOM には最低 3 バイト必要)".to_string());
+            }
             let without_bom = &bytes[3..];
             String::from_utf8(without_bom.to_vec())
                 .map_err(|e| format!("UTF-8-BOM デコードエラー: {e}"))

@@ -178,7 +178,8 @@ export const useThemeManagement = () => {
         }
 
         // ファイルに保存（カスタムテーマのみ）
-        await saveThemes(customThemes);
+        const saved = await saveThemes(customThemes);
+        if (!saved) return false;
 
         // UI のテーマリストを更新
         const allThemes = [...DEFAULT_THEMES, ...customThemes];
@@ -199,7 +200,8 @@ export const useThemeManagement = () => {
       try {
         const customThemes = themes.filter((t) => t.isCustom && t.id !== themeId);
 
-        await saveThemes(customThemes);
+        const saved = await saveThemes(customThemes);
+        if (!saved) return false;
 
         const allThemes = [...DEFAULT_THEMES, ...customThemes];
         setThemes(allThemes);

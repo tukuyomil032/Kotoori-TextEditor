@@ -20,7 +20,7 @@ export default defineConfig({
 
   clearScreen: false,
 
-  envPrefix: ['VITE_', 'TAURI_ENV_*'],
+  envPrefix: ['VITE_', 'TAURI_ENV_'],
 
   server: {
     port: 1420,

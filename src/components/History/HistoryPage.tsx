@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './History.css';
 import { format } from 'date-fns';
 import BackButton from '../BackButton';
@@ -12,7 +12,7 @@ import {
   SnapshotRecord as HMSnapshotRecord,
   DiffResult,
 } from '../../lib/history-manager';
-import { writeFileWithEncoding } from '../../lib/tauri-api';
+import { writeFileWithEncoding, Encoding } from '../../lib/tauri-api';
 
 // HistoryManager の FileRecord をローカル型にマップ
 interface FileRecord {
@@ -31,11 +31,12 @@ interface SnapshotRecord {
 
 interface HistoryPageProps {
   currentPath: string | undefined;
+  encoding: Encoding;
   onRestore: (content: string) => void;
   onBack: () => void;
 }
 
-const HistoryPage: React.FC<HistoryPageProps> = ({ currentPath, onRestore, onBack }) => {
+const HistoryPage: React.FC<HistoryPageProps> = ({ currentPath, encoding, onRestore, onBack }) => {
   const [files, setFiles] = useState<FileRecord[]>([]);
   const [selectedFile, setSelectedFile] = useState<FileRecord | null>(null);
   const [snapshots, setSnapshots] = useState<SnapshotRecord[]>([]);
@@ -134,7 +135,7 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ currentPath, onRestore, onBac
     }
 
     // ファイルに書き込む
-    await writeFileWithEncoding(selectedFile.path, content, 'UTF-8');
+    await writeFileWithEncoding(selectedFile.path, content, encoding);
 
     if (isCurrent) {
       onRestore(content);
@@ -157,7 +158,7 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ currentPath, onRestore, onBac
     const { save } = await import('@tauri-apps/plugin-dialog');
     const savePath = await save({ filters: [{ name: 'テキスト', extensions: ['txt', 'md'] }] });
     if (savePath) {
-      await writeFileWithEncoding(savePath, content, 'UTF-8');
+      await writeFileWithEncoding(savePath, content, encoding);
       window.alert('保存しました: ' + savePath);
     }
   };

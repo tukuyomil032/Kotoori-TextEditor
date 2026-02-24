@@ -1,6 +1,6 @@
 {
   "productName": "Kotoori",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "identifier": "com.kotoori.app",
   "build": {
     "frontendDist": "../dist",
@@ -25,7 +25,7 @@
     ],
     "macOSPrivateApi": true,
     "security": {
-      "csp": null
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; worker-src blob:; img-src 'self' data: blob: asset: https://asset.localhost"
     }
   },
   "bundle": {

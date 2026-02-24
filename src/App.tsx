@@ -764,12 +764,14 @@ function App() {
   const handleInsertEmphasisDots = () => {
     if (!editorRef.current) return;
     const editor = editorRef.current;
+    const model = editor.getModel();
+    if (!model) return;
     const selection = editor.getSelection();
 
     if (selection && !selection.isEmpty()) {
       // 選択文字列がある場合
       const range = selection;
-      const selectedText = editor.getModel().getValueInRange(range);
+      const selectedText = model.getValueInRange(range);
 
       // 各文字に《・》を付ける
       const dotsText = selectedText
@@ -1258,6 +1260,7 @@ function App() {
         {view === 'history' ? (
           <HistoryPage
             currentPath={currentPath}
+            encoding={currentEncoding}
             onRestore={(content) => {
               setCode(content);
               setIsDirty(false);

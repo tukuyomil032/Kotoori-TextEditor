@@ -93,7 +93,10 @@ export function useEditorSettings() {
             setSettings((prev) => ({ ...prev, autoIndent: !!data }));
             break;
           case 'set-word-wrap':
-            setSettings((prev) => ({ ...prev, wordWrap: data }));
+            setSettings((prev) => ({
+              ...prev,
+              wordWrap: typeof data === 'boolean' ? (data ? 'on' : 'off') : data,
+            }));
             break;
           case 'set-ruler-position': {
             const newPos = Number(data);
