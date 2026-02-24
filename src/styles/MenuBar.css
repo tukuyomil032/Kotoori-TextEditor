@@ -1,7 +1,7 @@
 /* MenuBar Base Styles */
 .menubar {
-  position: relative;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   gap: 0;
   background-color: var(--editor-bg);
   border-bottom: 1px solid var(--border-color);
@@ -9,7 +9,7 @@
   align-items: center;
   padding: 0 12px;
   user-select: none;
-  justify-content: space-between;
+  box-sizing: border-box;
 }
 
 /* ウィンドウコントロールボタン（右側） */
@@ -64,9 +64,9 @@
 
 /* macOS: 右側ドラッグ用スペーサー */
 .menubar-drag-spacer-right {
-  flex: 1;
-  height: 100%;
+  width: 72px;
   min-width: 72px;
+  height: 100%;
 }
 
 /* アプリアイコン（左側） */
@@ -88,11 +88,24 @@
   opacity: 1;
 }
 
-/* ウィンドウタイトル（中央） */
+/* 左側（アイコン + メニュー） */
+.menubar-left {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
+}
+
+/* 右側（ウィンドウコントロール / ドラッグスペーサー） */
+.menubar-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+/* ウィンドウタイトル（中央グリッド列） */
 .menubar-title {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -102,11 +115,11 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding: 0 16px;
+  padding: 0 8px;
   user-select: none;
   cursor: default;
-  max-width: calc(100% - 250px);
   pointer-events: none;
+  min-width: 0;
 }
 
 .menubar-title span {

@@ -29,7 +29,11 @@ window.MonacoEnvironment = {
   },
 };
 // バンドル済み monaco インスタンスを @monaco-editor/react に渡す（CDN ロード不要）
-loader.config({ monaco });
+// Monaco の UI を日本語化
+loader.config({
+  monaco,
+  'vs/nls': { availableLanguages: { '*': 'ja' } },
+});
 
 interface EditorStats {
   lines: number;
@@ -638,7 +642,10 @@ function App() {
   };
 
   const handleOpenFileDialog = async () => {
-    await openFileDialog();
+    const filePath = await openFileDialog();
+    if (filePath) {
+      await handleOpenFile(filePath);
+    }
   };
 
   const handleSaveFile = async (forceDialog?: boolean) => {

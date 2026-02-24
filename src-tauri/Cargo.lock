@@ -1892,7 +1892,7 @@ dependencies = [
 
 [[package]]
 name = "kotoori"
-version = "1.0.7"
+version = "1.0.8"
 dependencies = [
  "chrono",
  "encoding_rs",

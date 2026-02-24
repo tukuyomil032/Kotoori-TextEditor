@@ -46,6 +46,10 @@
   color: var(--editor-fg, #1e1e1e);
   background-color: transparent;
   width: 100%;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .markdown-body.vertical-writing {

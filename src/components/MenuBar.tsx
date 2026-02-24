@@ -325,50 +325,127 @@ const MenuBar: React.FC<MenuBarProps> = ({
       onDoubleClick={handleDoubleClick}
       onMouseDown={handleMenuBarMouseDown}
     >
-      {/* macOS: 信号ボタン用スペーサー / Windows: アプリアイコン */}
-      {isMacOS ? (
-        <div className="menubar-traffic-light-spacer" />
-      ) : (
-        <div className="menubar-app-icon">
-          <img
-            src={appIcon}
-            alt="Kotoori"
-            title="Kotoori"
-            onContextMenu={(e) => e.preventDefault()}
-            draggable={false}
-          />
-        </div>
-      )}
+      {/* 左列: アイコン/スペーサー + メニュー */}
+      <div className="menubar-left">
+        {/* macOS: 信号ボタン用スペーサー / Windows: アプリアイコン */}
+        {isMacOS ? (
+          <div className="menubar-traffic-light-spacer" />
+        ) : (
+          <div className="menubar-app-icon">
+            <img
+              src={appIcon}
+              alt="Kotoori"
+              title="Kotoori"
+              onContextMenu={(e) => e.preventDefault()}
+              draggable={false}
+            />
+          </div>
+        )}
 
-      {/* メニューバー */}
-      <div className="menubar-menus">
-        {Object.entries(menus).map(([menuName, items]) => (
-          <div key={menuName} className="menubar-item">
-            <button
-              className={`menubar-button ${openMenu === menuName ? 'active' : ''}`}
-              onClick={() => setOpenMenu(openMenu === menuName ? null : menuName)}
-              onMouseEnter={() => openMenu && setOpenMenu(menuName)}
-            >
-              {menuName}
-            </button>
-            {openMenu === menuName && (
-              <div className="menubar-dropdown">
-                {items.map((item, index) =>
-                  item.type === 'separator' ? (
-                    <div key={`sep-${index}`} className="menubar-separator" />
-                  ) : item.submenu ? (
-                    <div
-                      key={item.label || `submenu-${index}`}
-                      className="menubar-submenu-container"
-                      onMouseEnter={() => setOpenSubmenu(item.label || null)}
-                      onMouseLeave={() => setOpenSubmenu(null)}
-                    >
-                      <div className="menubar-submenu-button">
+        {/* メニューバー */}
+        <div className="menubar-menus">
+          {Object.entries(menus).map(([menuName, items]) => (
+            <div key={menuName} className="menubar-item">
+              <button
+                className={`menubar-button ${openMenu === menuName ? 'active' : ''}`}
+                onClick={() => setOpenMenu(openMenu === menuName ? null : menuName)}
+                onMouseEnter={() => openMenu && setOpenMenu(menuName)}
+              >
+                {menuName}
+              </button>
+              {openMenu === menuName && (
+                <div className="menubar-dropdown">
+                  {items.map((item, index) =>
+                    item.type === 'separator' ? (
+                      <div key={`sep-${index}`} className="menubar-separator" />
+                    ) : item.submenu ? (
+                      <div
+                        key={item.label || `submenu-${index}`}
+                        className="menubar-submenu-container"
+                        onMouseEnter={() => setOpenSubmenu(item.label || null)}
+                        onMouseLeave={() => setOpenSubmenu(null)}
+                      >
+                        <div className="menubar-submenu-button">
+                          {item.type === 'checkbox' && (
+                            <input
+                              type="checkbox"
+                              checked={item.checked || false}
+                              onChange={() => {}}
+                              className="menubar-checkbox"
+                            />
+                          )}
+                          {item.type === 'radio' && (
+                            <input
+                              type="radio"
+                              checked={item.checked || false}
+                              onChange={() => {}}
+                              className="menubar-radio"
+                            />
+                          )}
+                          {item.label && <span>{item.label}</span>}
+                          <ChevronDown size={16} className="menubar-chevron" />
+                        </div>
+                        {openSubmenu === (item.label || null) && (
+                          <div className="menubar-submenu">
+                            {item.submenu.map((subitem, subindex) =>
+                              subitem.type === 'separator' ? (
+                                <div key={`subsep-${subindex}`} className="menubar-separator" />
+                              ) : (
+                                <button
+                                  key={subitem.label || `subitem-${subindex}`}
+                                  className={`menubar-submenu-item ${subitem.disabled ? 'disabled' : ''}`}
+                                  onClick={() => {
+                                    if (!subitem.disabled) handleMenuItemClick(subitem);
+                                  }}
+                                  disabled={!!subitem.disabled}
+                                  title={
+                                    subitem.disabled && typeof subitem.action === 'string'
+                                      ? itemLabelTitle(subitem.action)
+                                      : undefined
+                                  }
+                                >
+                                  {subitem.type === 'checkbox' && (
+                                    <input
+                                      type="checkbox"
+                                      checked={subitem.checked || false}
+                                      onChange={() => handleMenuItemClick(subitem)}
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="menubar-checkbox"
+                                    />
+                                  )}
+                                  {subitem.type === 'radio' && (
+                                    <input
+                                      type="radio"
+                                      checked={subitem.checked || false}
+                                      onChange={() => handleMenuItemClick(subitem)}
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="menubar-radio"
+                                    />
+                                  )}
+                                  {subitem.label && (
+                                    <span className="menubar-submenu-label">{subitem.label}</span>
+                                  )}
+                                  {subitem.accelerator && (
+                                    <span className="menubar-shortcut">{subitem.accelerator}</span>
+                                  )}
+                                </button>
+                              )
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <button
+                        key={item.label || `item-${Math.random()}`}
+                        className="menubar-menu-item"
+                        onClick={() => handleMenuItemClick(item)}
+                      >
                         {item.type === 'checkbox' && (
                           <input
                             type="checkbox"
                             checked={item.checked || false}
-                            onChange={() => {}}
+                            onChange={() => handleMenuItemClick(item)}
+                            onClick={(e) => e.stopPropagation()}
                             className="menubar-checkbox"
                           />
                         )}
@@ -376,128 +453,58 @@ const MenuBar: React.FC<MenuBarProps> = ({
                           <input
                             type="radio"
                             checked={item.checked || false}
-                            onChange={() => {}}
+                            onChange={() => handleMenuItemClick(item)}
+                            onClick={(e) => e.stopPropagation()}
                             className="menubar-radio"
                           />
                         )}
-                        {item.label && <span>{item.label}</span>}
-                        <ChevronDown size={16} className="menubar-chevron" />
-                      </div>
-                      {openSubmenu === (item.label || null) && (
-                        <div className="menubar-submenu">
-                          {item.submenu.map((subitem, subindex) =>
-                            subitem.type === 'separator' ? (
-                              <div key={`subsep-${subindex}`} className="menubar-separator" />
-                            ) : (
-                              <button
-                                key={subitem.label || `subitem-${subindex}`}
-                                className={`menubar-submenu-item ${subitem.disabled ? 'disabled' : ''}`}
-                                onClick={() => {
-                                  if (!subitem.disabled) handleMenuItemClick(subitem);
-                                }}
-                                disabled={!!subitem.disabled}
-                                title={
-                                  subitem.disabled && typeof subitem.action === 'string'
-                                    ? itemLabelTitle(subitem.action)
-                                    : undefined
-                                }
-                              >
-                                {subitem.type === 'checkbox' && (
-                                  <input
-                                    type="checkbox"
-                                    checked={subitem.checked || false}
-                                    onChange={() => handleMenuItemClick(subitem)}
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="menubar-checkbox"
-                                  />
-                                )}
-                                {subitem.type === 'radio' && (
-                                  <input
-                                    type="radio"
-                                    checked={subitem.checked || false}
-                                    onChange={() => handleMenuItemClick(subitem)}
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="menubar-radio"
-                                  />
-                                )}
-                                {subitem.label && (
-                                  <span className="menubar-submenu-label">{subitem.label}</span>
-                                )}
-                                {subitem.accelerator && (
-                                  <span className="menubar-shortcut">{subitem.accelerator}</span>
-                                )}
-                              </button>
-                            )
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <button
-                      key={item.label || `item-${Math.random()}`}
-                      className="menubar-menu-item"
-                      onClick={() => handleMenuItemClick(item)}
-                    >
-                      {item.type === 'checkbox' && (
-                        <input
-                          type="checkbox"
-                          checked={item.checked || false}
-                          onChange={() => handleMenuItemClick(item)}
-                          onClick={(e) => e.stopPropagation()}
-                          className="menubar-checkbox"
-                        />
-                      )}
-                      {item.type === 'radio' && (
-                        <input
-                          type="radio"
-                          checked={item.checked || false}
-                          onChange={() => handleMenuItemClick(item)}
-                          onClick={(e) => e.stopPropagation()}
-                          className="menubar-radio"
-                        />
-                      )}
-                      {item.label && <span className="menubar-label">{item.label}</span>}
-                      {item.accelerator && (
-                        <span className="menubar-shortcut">{item.accelerator}</span>
-                      )}
-                    </button>
-                  )
-                )}
-              </div>
-            )}
-          </div>
-        ))}
+                        {item.label && <span className="menubar-label">{item.label}</span>}
+                        {item.accelerator && (
+                          <span className="menubar-shortcut">{item.accelerator}</span>
+                        )}
+                      </button>
+                    )
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
+      {/* /menubar-left */}
 
-      {/* ウィンドウタイトル（中央） */}
+      {/* ウィンドウタイトル（中央グリッド列） */}
       <div className="menubar-title" title={title}>
         <span>{displayTitle}</span>
       </div>
 
-      {/* Windows のみカスタム ウィンドウコントロールを表示 / macOS は右スペーサーでドラッグ領域を確保 */}
-      {isMacOS ? (
-        <div className="menubar-drag-spacer-right" />
-      ) : (
-        <div className="menubar-window-controls">
-          <button
-            className="menubar-control-btn minimize-btn"
-            onClick={handleMinimize}
-            title="最小化"
-          >
-            <Minus size={16} />
-          </button>
-          <button
-            className="menubar-control-btn maximize-btn"
-            onClick={handleMaximize}
-            title={isMaximized ? '復元' : '最大化'}
-          >
-            {isMaximized ? <Copy size={16} /> : <Square size={16} />}
-          </button>
-          <button className="menubar-control-btn close-btn" onClick={handleClose} title="閉じる">
-            <X size={16} />
-          </button>
-        </div>
-      )}
+      {/* 右列: ウィンドウコントロール / macOSドラッグスペーサー */}
+      <div className="menubar-right">
+        {isMacOS ? (
+          <div className="menubar-drag-spacer-right" />
+        ) : (
+          <div className="menubar-window-controls">
+            <button
+              className="menubar-control-btn minimize-btn"
+              onClick={handleMinimize}
+              title="最小化"
+            >
+              <Minus size={16} />
+            </button>
+            <button
+              className="menubar-control-btn maximize-btn"
+              onClick={handleMaximize}
+              title={isMaximized ? '復元' : '最大化'}
+            >
+              {isMaximized ? <Copy size={16} /> : <Square size={16} />}
+            </button>
+            <button className="menubar-control-btn close-btn" onClick={handleClose} title="閉じる">
+              <X size={16} />
+            </button>
+          </div>
+        )}
+      </div>
+      {/* /menubar-right */}
     </div>
   );
 };
