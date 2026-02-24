@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { readThemes, saveThemes } from '../lib/tauri-api';
 
 export interface ThemeColors {
   statusBg: string;
@@ -134,7 +135,7 @@ export const useThemeManagement = () => {
   useEffect(() => {
     const initializeThemes = async () => {
       try {
-        const savedThemes = await window.electronAPI.readThemes();
+        const savedThemes = await readThemes();
         if (savedThemes && Array.isArray(savedThemes) && savedThemes.length > 0) {
           // 保存されたテーマ（カスタムのみ）とデフォルトテーマをマージ
           const customThemes = savedThemes.filter((t) => t.isCustom);
@@ -154,9 +155,12 @@ export const useThemeManagement = () => {
   }, []);
 
   // テーマを取得
-  const getTheme = useCallback((themeId: string): Theme | undefined => {
-    return themes.find((t) => t.id === themeId);
-  }, [themes]);
+  const getTheme = useCallback(
+    (themeId: string): Theme | undefined => {
+      return themes.find((t) => t.id === themeId);
+    },
+    [themes]
+  );
 
   // カスタムテーマを保存
   const saveCustomTheme = useCallback(
@@ -174,15 +178,13 @@ export const useThemeManagement = () => {
         }
 
         // ファイルに保存（カスタムテーマのみ）
-        const success = await window.electronAPI.saveThemes(customThemes);
+        await saveThemes(customThemes);
 
-        if (success) {
-          // UI のテーマリストを更新
-          const allThemes = [...DEFAULT_THEMES, ...customThemes];
-          setThemes(allThemes);
-        }
+        // UI のテーマリストを更新
+        const allThemes = [...DEFAULT_THEMES, ...customThemes];
+        setThemes(allThemes);
 
-        return success;
+        return true;
       } catch (e) {
         console.error('Failed to save theme:', e);
         return false;
@@ -195,18 +197,14 @@ export const useThemeManagement = () => {
   const deleteCustomTheme = useCallback(
     async (themeId: string): Promise<boolean> => {
       try {
-        const customThemes = themes.filter(
-          (t) => t.isCustom && t.id !== themeId
-        );
+        const customThemes = themes.filter((t) => t.isCustom && t.id !== themeId);
 
-        const success = await window.electronAPI.saveThemes(customThemes);
+        await saveThemes(customThemes);
 
-        if (success) {
-          const allThemes = [...DEFAULT_THEMES, ...customThemes];
-          setThemes(allThemes);
-        }
+        const allThemes = [...DEFAULT_THEMES, ...customThemes];
+        setThemes(allThemes);
 
-        return success;
+        return true;
       } catch (e) {
         console.error('Failed to delete theme:', e);
         return false;

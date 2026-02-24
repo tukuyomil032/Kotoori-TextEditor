@@ -1,0 +1,40 @@
+[package]
+name = "kotoori"
+version = "0.0.0"
+description = "日本語編集に最適化されたデスクトップ向けテキストエディタ（Monaco搭載）"
+authors = []
+license = "MIT"
+repository = "https://github.com/kermount-dev/Kotoori-TextEditor"
+edition = "2021"
+rust-version = "1.77.2"
+
+[lib]
+name = "kotoori_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.5.4", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["macos-private-api"] }
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-shell = "2"
+tauri-plugin-clipboard-manager = "2"
+tauri-plugin-sql = { version = "2", features = ["sqlite"] }
+tauri-plugin-store = "2"
+tauri-plugin-window-state = "2"
+tauri-plugin-os = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+encoding_rs = "0.8"
+thiserror = "2"
+tokio = { version = "1", features = ["full"] }
+chrono = { version = "0.4", features = ["clock"] }
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+strip = true
+opt-level = "s"

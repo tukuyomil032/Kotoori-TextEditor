@@ -1,33 +1,33 @@
 .back-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 6px 12px;
-    background-color: transparent;
-    color: var(--accent-color, #007acc);
-    border: 1px solid transparent;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9em;
-    font-family: inherit;
-    transition: all 0.2s;
-    white-space: nowrap;
-    flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background-color: transparent;
+  color: var(--accent-color, #007acc);
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  font-family: inherit;
+  transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .back-button:hover {
-    background-color: var(--item-hover-bg);
-    border-color: var(--border-color);
-    color: var(--accent-color);
+  background-color: var(--item-hover-bg);
+  border-color: var(--border-color);
+  color: var(--accent-color);
 }
 
 .back-button:active {
-    background-color: var(--item-active-bg);
-    border-color: var(--border-color);
+  background-color: var(--item-active-bg);
+  border-color: var(--border-color);
 }
 
 .back-button svg {
-    width: 20px;
-    height: 20px;
+  width: 20px;
+  height: 20px;
 }

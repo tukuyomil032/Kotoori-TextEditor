@@ -171,14 +171,18 @@
 }
 
 /* Disabled menu items */
-.menubar-submenu-item.disabled, .menubar-submenu-item:disabled,
-.menubar-menu-item.disabled, .menubar-menu-item:disabled {
+.menubar-submenu-item.disabled,
+.menubar-submenu-item:disabled,
+.menubar-menu-item.disabled,
+.menubar-menu-item:disabled {
   color: var(--text-muted);
   cursor: default;
   opacity: 0.85;
 }
-.menubar-submenu-item.disabled:hover, .menubar-submenu-item:disabled:hover,
-.menubar-menu-item.disabled:hover, .menubar-menu-item:disabled:hover {
+.menubar-submenu-item.disabled:hover,
+.menubar-submenu-item:disabled:hover,
+.menubar-menu-item.disabled:hover,
+.menubar-menu-item:disabled:hover {
   background-color: transparent;
 }
 

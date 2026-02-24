@@ -3,17 +3,18 @@ import Editor from '@monaco-editor/react';
 import { useThemeManagement, Theme, ThemeColors } from '../../hooks/useThemeManagement';
 import StatusBar from '../StatusBar';
 import './ThemeCustomizer.css';
+import { save as saveDialog } from '@tauri-apps/plugin-dialog';
+import { writeTextFile } from '@tauri-apps/plugin-fs';
+import { saveThemes } from '../../lib/tauri-api';
 
 interface ThemeCustomizerProps {
   currentTheme: string;
   onThemeChange: (themeId: string) => void;
 }
 
-const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({
-  currentTheme,
-  onThemeChange,
-}) => {
-  const { themes, isInitialized, getTheme, saveCustomTheme, deleteCustomTheme, applyThemeColors } = useThemeManagement();
+const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ currentTheme, onThemeChange }) => {
+  const { themes, isInitialized, getTheme, saveCustomTheme, deleteCustomTheme, applyThemeColors } =
+    useThemeManagement();
   const [selectedTheme, setSelectedTheme] = useState<Theme | undefined>();
   const [editedColors, setEditedColors] = useState<ThemeColors | null>(null);
   const [newThemeName, setNewThemeName] = useState('');
@@ -152,8 +153,22 @@ The seasons repeated endlessly in her heart.`;
   return (
     <div className="theme-customizer">
       <div className="theme-toolbar">
-        <button className="btn" title="プレビュー更新" aria-label="プレビュー更新" onClick={handlePreviewTheme}>プレビュー更新</button>
-        <button className="btn" title="新規保存" aria-label="新規保存" onClick={() => setShowSaveDialog(true)}>新規保存</button>
+        <button
+          className="btn"
+          title="プレビュー更新"
+          aria-label="プレビュー更新"
+          onClick={handlePreviewTheme}
+        >
+          プレビュー更新
+        </button>
+        <button
+          className="btn"
+          title="新規保存"
+          aria-label="新規保存"
+          onClick={() => setShowSaveDialog(true)}
+        >
+          新規保存
+        </button>
         <button
           className="btn"
           title="テーマを書き出す"
@@ -162,7 +177,12 @@ The seasons repeated endlessly in her heart.`;
             if (!selectedTheme) return;
             try {
               const data = JSON.stringify(selectedTheme, null, 2);
-              await window.electronAPI.saveFile(data, undefined, true);
+              const savePath = await saveDialog({
+                filters: [{ name: 'JSON', extensions: ['json'] }],
+              });
+              if (savePath) {
+                await writeTextFile(savePath, data);
+              }
             } catch (e) {
               console.error('Export theme failed', e);
             }
@@ -183,7 +203,7 @@ The seasons repeated endlessly in her heart.`;
               const parsed = JSON.parse(text);
               if (Array.isArray(parsed)) {
                 const customs = parsed.filter((t: any) => t && t.isCustom);
-                await window.electronAPI.saveThemes(customs);
+                await saveThemes(customs);
               } else if (parsed && parsed.id) {
                 await saveCustomTheme(parsed);
               }
@@ -192,26 +212,52 @@ The seasons repeated endlessly in her heart.`;
               console.error('Import theme failed', err);
               alert('テーマの読み込みに失敗しました。正しいJSONを選んでください。');
             } finally {
-              const input = document.getElementById('theme-import-input') as HTMLInputElement | null;
+              const input = document.getElementById(
+                'theme-import-input'
+              ) as HTMLInputElement | null;
               if (input) input.value = '';
             }
           }}
         />
-        <label htmlFor="theme-import-input" className="btn" title="テーマを読み込む" aria-label="テーマを読み込む" style={{ cursor: 'pointer' }}>
+        <label
+          htmlFor="theme-import-input"
+          className="btn"
+          title="テーマを読み込む"
+          aria-label="テーマを読み込む"
+          style={{ cursor: 'pointer' }}
+        >
           テーマを読み込む
         </label>
         <div style={{ marginLeft: 'auto' }}>
-          {selectedTheme.isCustom && (
-            !deleteConfirm ? (
-              <button className="btn btn-delete" title="削除" aria-label="削除" onClick={() => setDeleteConfirm(true)}>削除</button>
+          {selectedTheme.isCustom &&
+            (!deleteConfirm ? (
+              <button
+                className="btn btn-delete"
+                title="削除"
+                aria-label="削除"
+                onClick={() => setDeleteConfirm(true)}
+              >
+                削除
+              </button>
             ) : (
               <div style={{ display: 'inline-flex', gap: '8px', alignItems: 'center' }}>
                 <span style={{ marginRight: '8px' }}>削除しますか？</span>
-                <button className="btn btn-sm btn-confirm-yes" style={{ width: '6em' }} onClick={handleDeleteTheme}>はい</button>
-                <button className="btn btn-sm btn-confirm-no" style={{ width: '6em' }} onClick={() => setDeleteConfirm(false)}>いいえ</button>
+                <button
+                  className="btn btn-sm btn-confirm-yes"
+                  style={{ width: '6em' }}
+                  onClick={handleDeleteTheme}
+                >
+                  はい
+                </button>
+                <button
+                  className="btn btn-sm btn-confirm-no"
+                  style={{ width: '6em' }}
+                  onClick={() => setDeleteConfirm(false)}
+                >
+                  いいえ
+                </button>
               </div>
-            )
-          )}
+            ))}
         </div>
       </div>
       <div className="heading-editor-container">
@@ -300,7 +346,13 @@ The seasons repeated endlessly in her heart.`;
             <Editor
               language="kotoori-text"
               value={previewCode}
-              theme={selectedTheme.id === 'light' ? 'light-custom' : selectedTheme.id === 'vs-dark' ? 'vs-dark-custom' : selectedTheme.id}
+              theme={
+                selectedTheme.id === 'light'
+                  ? 'light-custom'
+                  : selectedTheme.id === 'vs-dark'
+                    ? 'vs-dark-custom'
+                    : selectedTheme.id
+              }
               options={{
                 readOnly: true,
                 minimap: { enabled: false },
@@ -324,7 +376,7 @@ The seasons repeated endlessly in her heart.`;
                     const currentLineChars = lineContent.length;
                     const selection = editor.getSelection();
                     const selectedChars = selection ? model.getValueInRange(selection).length : 0;
-                    
+
                     setPreviewStats({
                       line,
                       column,
@@ -353,7 +405,9 @@ The seasons repeated endlessly in her heart.`;
         </div>
       </div>
       <div className="theme-footer">
-        <div className="footer-text">Theme Customizer — カスタムテーマはユーザーデータとして保存されます</div>
+        <div className="footer-text">
+          Theme Customizer — カスタムテーマはユーザーデータとして保存されます
+        </div>
       </div>
     </div>
   );

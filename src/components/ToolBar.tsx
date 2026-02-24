@@ -1,35 +1,48 @@
-import React from 'react'
+import React from 'react';
 import {
-  FilePlus, FolderOpen, Save, Clock, ChartNoAxesGantt, Eye, EyeOff,
-  Bold, Italic, Heading, Link, List, ListOrdered, Quote, Code
-} from 'lucide-react'
-import rubyIcon from '../assets/icon/ruby.svg'
-import pointIcon from '../assets/icon/point.svg'
-import '../styles/ToolBar.css'
+  FilePlus,
+  FolderOpen,
+  Save,
+  Clock,
+  ChartNoAxesGantt,
+  Eye,
+  EyeOff,
+  Bold,
+  Italic,
+  Heading,
+  Link,
+  List,
+  ListOrdered,
+  Quote,
+  Code,
+} from 'lucide-react';
+import rubyIcon from '../assets/icon/ruby.svg';
+import pointIcon from '../assets/icon/point.svg';
+import '../styles/ToolBar.css';
 
 interface ToolBarProps {
-  onNew: () => void
-  onOpen: () => void
-  onSave: () => void
-  onShowHistory: () => void
-  showOutline: boolean
-  onToggleOutline: () => void
-  isPreviewVisible: boolean
-  onTogglePreview: () => void
-  previewMode: 'markdown' | 'vertical'
-  onTogglePreviewMode: (mode: 'markdown' | 'vertical') => void
-  onInsertRuby: () => void
-  onInsertEmphasisDots: () => void
-  onBold: () => void
-  onItalic: () => void
-  onHeading: () => void
-  onLink: () => void
-  onList: () => void
-  onListOrdered: () => void
-  onQuote: () => void
-  onCode: () => void
-  showRuby?: boolean
-  showMarkdown?: boolean
+  onNew: () => void;
+  onOpen: () => void;
+  onSave: () => void;
+  onShowHistory: () => void;
+  showOutline: boolean;
+  onToggleOutline: () => void;
+  isPreviewVisible: boolean;
+  onTogglePreview: () => void;
+  previewMode: 'markdown' | 'vertical';
+  onTogglePreviewMode: (mode: 'markdown' | 'vertical') => void;
+  onInsertRuby: () => void;
+  onInsertEmphasisDots: () => void;
+  onBold: () => void;
+  onItalic: () => void;
+  onHeading: () => void;
+  onLink: () => void;
+  onList: () => void;
+  onListOrdered: () => void;
+  onQuote: () => void;
+  onCode: () => void;
+  showRuby?: boolean;
+  showMarkdown?: boolean;
 }
 
 const ToolBar: React.FC<ToolBarProps> = ({
@@ -115,7 +128,11 @@ const ToolBar: React.FC<ToolBarProps> = ({
           className="toolbar-btn"
           style={{ fontSize: '12px', fontWeight: 'bold' }}
           onClick={() => onTogglePreviewMode(previewMode === 'markdown' ? 'vertical' : 'markdown')}
-          title={previewMode === 'markdown' ? '縦書きプレビューに切り替え' : 'Markdownプレビューに切り替え'}
+          title={
+            previewMode === 'markdown'
+              ? '縦書きプレビューに切り替え'
+              : 'Markdownプレビューに切り替え'
+          }
         >
           {previewMode === 'markdown' ? '縦' : '横'}
         </button>
@@ -146,36 +163,16 @@ const ToolBar: React.FC<ToolBarProps> = ({
       {showMarkdown && (
         <>
           <div className="toolbar-separator" />
-          <button
-            className="toolbar-btn"
-            onClick={onBold}
-            title="太字"
-            aria-label="太字"
-          >
+          <button className="toolbar-btn" onClick={onBold} title="太字" aria-label="太字">
             <Bold size={20} />
           </button>
-          <button
-            className="toolbar-btn"
-            onClick={onItalic}
-            title="斜体"
-            aria-label="斜体"
-          >
+          <button className="toolbar-btn" onClick={onItalic} title="斜体" aria-label="斜体">
             <Italic size={20} />
           </button>
-          <button
-            className="toolbar-btn"
-            onClick={onHeading}
-            title="見出し"
-            aria-label="見出し"
-          >
+          <button className="toolbar-btn" onClick={onHeading} title="見出し" aria-label="見出し">
             <Heading size={20} />
           </button>
-          <button
-            className="toolbar-btn"
-            onClick={onLink}
-            title="リンク"
-            aria-label="リンク"
-          >
+          <button className="toolbar-btn" onClick={onLink} title="リンク" aria-label="リンク">
             <Link size={20} />
           </button>
           <button
@@ -194,26 +191,16 @@ const ToolBar: React.FC<ToolBarProps> = ({
           >
             <ListOrdered size={20} />
           </button>
-          <button
-            className="toolbar-btn"
-            onClick={onQuote}
-            title="引用"
-            aria-label="引用"
-          >
+          <button className="toolbar-btn" onClick={onQuote} title="引用" aria-label="引用">
             <Quote size={20} />
           </button>
-          <button
-            className="toolbar-btn"
-            onClick={onCode}
-            title="コード"
-            aria-label="コード"
-          >
+          <button className="toolbar-btn" onClick={onCode} title="コード" aria-label="コード">
             <Code size={20} />
           </button>
         </>
       )}
     </div>
   );
-}
+};
 
-export default ToolBar
+export default ToolBar;

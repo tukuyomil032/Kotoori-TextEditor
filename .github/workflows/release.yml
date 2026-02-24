@@ -1,0 +1,125 @@
+name: Release
+
+# src-tauri/tauri.conf.json または package.json のバージョンが変わったとき
+# main ブランチへの push で自動的にタグ作成・ビルド・リリースを行う
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src-tauri/tauri.conf.json'
+      - 'package.json'
+
+jobs:
+  # ────────────────────────────────────────────────────────────
+  # 1. バージョンを読み取り、タグをまだなければ作成する
+  # ────────────────────────────────────────────────────────────
+  create-tag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+      skip: ${{ steps.tag.outputs.skip }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read version & decide tag
+        id: tag
+        run: |
+          VERSION=$(jq -r '.version' src-tauri/tauri.conf.json)
+          TAG="v${VERSION}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          if git ls-remote --tags origin "${TAG}" | grep -q "${TAG}"; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "タグ ${TAG} は既に存在します。ビルドをスキップします。"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            echo "タグ ${TAG} を作成します。"
+          fi
+
+      - name: Create and push tag
+        if: steps.tag.outputs.skip == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "${{ steps.tag.outputs.tag }}"
+          git push origin "${{ steps.tag.outputs.tag }}"
+
+  # ────────────────────────────────────────────────────────────
+  # 2. 各プラットフォームでビルドして GitHub Releases を作成する
+  # ────────────────────────────────────────────────────────────
+  build:
+    needs: create-tag
+    if: needs.create-tag.outputs.skip == 'false'
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # macOS: Apple Silicon (M1+)
+          - platform: macos-latest
+            args: --target aarch64-apple-darwin
+
+          # macOS: Intel
+          - platform: macos-latest
+            args: --target x86_64-apple-darwin
+
+          # macOS: Universal Binary (Intel + Apple Silicon)
+          - platform: macos-latest
+            args: --target universal-apple-darwin
+
+          # Windows
+          - platform: windows-latest
+            args: ''
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - name: Install frontend dependencies
+        run: pnpm install
+
+      - name: Build and publish Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ needs.create-tag.outputs.tag }}
+          releaseName: Kotoori ${{ needs.create-tag.outputs.tag }}
+          releaseBody: |
+            ## Kotoori ${{ needs.create-tag.outputs.tag }}
+
+            日本語編集に最適化されたデスクトップ向けテキストエディタです。
+
+            ### ダウンロード
+            - **macOS Apple Silicon (M1+)**: `*_aarch64.dmg`
+            - **macOS Intel**: `*_x64.dmg`
+            - **macOS Universal**: `*_universal.dmg`
+            - **Windows**: `*_x64-setup.exe` / `*_x64_en-US.msi`
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}

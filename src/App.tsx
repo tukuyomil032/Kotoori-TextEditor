@@ -1,18 +1,16 @@
-﻿import React, { useEffect, useState, useRef } from 'react'
+﻿import React, { useEffect, useState, useRef } from 'react';
 import Editor, { OnMount, loader } from '@monaco-editor/react';
+import {
+  openFileDialog,
+  getClipboardText,
+  isBinaryFile,
+  readConfig,
+  writeConfig,
+  readHeadings,
+  saveHeadings,
+} from './lib/tauri-api';
+import { useTauriWindow, useTauriCloseRequest } from './hooks/useTauriWindow';
 import * as monaco from 'monaco-editor';
-
-// Monaco Editorをローカルリソースで日本語化するための設定
-loader.config({
-  paths: {
-    vs: './monaco-editor/min/vs'
-  },
-  'vs/nls': {
-    availableLanguages: {
-      '*': 'ja'
-    }
-  }
-});
 import StatusBar from './components/StatusBar';
 import { useEditorSettings } from './hooks/useEditorSettings';
 import { useFileOperations } from './hooks/useFileOperations';
@@ -23,13 +21,38 @@ import MenuBar from './components/MenuBar';
 import MarkdownPreview from './components/MarkdownPreview/MarkdownPreview';
 import ToolBar from './components/ToolBar';
 
-interface EditorStats { lines: number; chars: number; currentLineChars: number; line: number; column: number; selectedChars: number; }
+// Monaco Editorをローカルリソースで日本語化するための設定
+loader.config({
+  paths: {
+    vs: './monaco-editor/min/vs',
+  },
+  'vs/nls': {
+    availableLanguages: {
+      '*': 'ja',
+    },
+  },
+});
 
+interface EditorStats {
+  lines: number;
+  chars: number;
+  currentLineChars: number;
+  line: number;
+  column: number;
+  selectedChars: number;
+}
 
 function App() {
-  const [code, setCode] = useState('')
-  const [view, setView] = useState<'editor' | 'history' | 'settings'>('editor')
-  const [stats, setStats] = useState<EditorStats>({ lines: 1, chars: 0, currentLineChars: 0, line: 1, column: 1, selectedChars: 0 })
+  const [code, setCode] = useState('');
+  const [view, setView] = useState<'editor' | 'history' | 'settings'>('editor');
+  const [stats, setStats] = useState<EditorStats>({
+    lines: 1,
+    chars: 0,
+    currentLineChars: 0,
+    line: 1,
+    column: 1,
+    selectedChars: 0,
+  });
   const [outlineItems, setOutlineItems] = useState<OutlineItem[]>([]);
   const [headingSettings, setHeadingSettings] = useState<{ head: string; level: number }[]>([]);
   const [lastSaveTime, setLastSaveTime] = useState<string | null>(null); // 保存時刻
@@ -38,9 +61,25 @@ function App() {
   const [isResizing, setIsResizing] = useState(false); // リサイズ中フラグ
 
   const { settings, updateSettings } = useEditorSettings();
-  const { currentPath, setIsDirty, saveFile, createNew, openFile, checkAutoFirstSave, isDirtyRef, codeRef, cursorPositionRef, currentEncoding, onFileSaved } = useFileOperations(code, setCode, settings.restoreLastFile);
+  const {
+    currentPath,
+    setIsDirty,
+    saveFile,
+    createNew,
+    openFile,
+    checkAutoFirstSave,
+    isDirtyRef,
+    codeRef,
+    cursorPositionRef,
+    currentEncoding,
+    onFileSaved,
+  } = useFileOperations(code, setCode, settings.restoreLastFile);
+  const { close: tauriClose } = useTauriWindow();
 
-  const addRubyActions = (editor: monaco.editor.IStandaloneCodeEditor, monaco: typeof import('monaco-editor')): monaco.IDisposable[] => {
+  const addRubyActions = (
+    editor: monaco.editor.IStandaloneCodeEditor,
+    monaco: typeof import('monaco-editor')
+  ): monaco.IDisposable[] => {
     // 右クリックメニューにルビ挿入アクションを追加
     const d1 = editor.addAction({
       id: 'insert-ruby',
@@ -61,17 +100,19 @@ function App() {
           const startLineNumber = selection.startLineNumber;
           const startColumn = selection.startColumn;
 
-          ed.executeEdits('insert-ruby', [{
-            range: selection,
-            text: rubyFormat,
-            forceMoveMarkers: true
-          }]);
+          ed.executeEdits('insert-ruby', [
+            {
+              range: selection,
+              text: rubyFormat,
+              forceMoveMarkers: true,
+            },
+          ]);
 
           // カーソルを《》の間に移動（《の直後）
           setTimeout(() => {
             const newPosition = {
               lineNumber: startLineNumber,
-              column: startColumn + selectedText.length + 2 // |と選択文字とルビ記号分
+              column: startColumn + selectedText.length + 2, // |と選択文字とルビ記号分
             };
             ed.setPosition(newPosition);
           }, 0);
@@ -80,22 +121,29 @@ function App() {
           const position = ed.getPosition();
           if (!position) return;
 
-          ed.executeEdits('insert-ruby-empty', [{
-            range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
-            text: '|《》',
-            forceMoveMarkers: true
-          }]);
+          ed.executeEdits('insert-ruby-empty', [
+            {
+              range: new monaco.Range(
+                position.lineNumber,
+                position.column,
+                position.lineNumber,
+                position.column
+              ),
+              text: '|《》',
+              forceMoveMarkers: true,
+            },
+          ]);
 
           // カーソルを|《の間に移動（|の直後）
           setTimeout(() => {
             const newPosition = {
               lineNumber: position.lineNumber,
-              column: position.column + 1
+              column: position.column + 1,
             };
             ed.setPosition(newPosition);
           }, 0);
         }
-      }
+      },
     });
 
     // 右クリックメニューに傍点挿入アクションを追加
@@ -114,21 +162,26 @@ function App() {
 
         if (selectedText) {
           // 文字が選択されている場合：各文字を|文《・》の形式に変換
-          const dotFormat = selectedText.split('').map((char: string) => `|${char}《・》`).join('');
+          const dotFormat = selectedText
+            .split('')
+            .map((char: string) => `|${char}《・》`)
+            .join('');
           const startLineNumber = selection.startLineNumber;
           const startColumn = selection.startColumn;
 
-          ed.executeEdits('insert-dot', [{
-            range: selection,
-            text: dotFormat,
-            forceMoveMarkers: true
-          }]);
+          ed.executeEdits('insert-dot', [
+            {
+              range: selection,
+              text: dotFormat,
+              forceMoveMarkers: true,
+            },
+          ]);
 
           // カーソルを最後の》の後に移動
           setTimeout(() => {
             const newPosition = {
               lineNumber: startLineNumber,
-              column: startColumn + dotFormat.length
+              column: startColumn + dotFormat.length,
             };
             ed.setPosition(newPosition);
           }, 0);
@@ -137,22 +190,29 @@ function App() {
           const position = ed.getPosition();
           if (!position) return;
 
-          ed.executeEdits('insert-dot-empty', [{
-            range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
-            text: '|《・》',
-            forceMoveMarkers: true
-          }]);
+          ed.executeEdits('insert-dot-empty', [
+            {
+              range: new monaco.Range(
+                position.lineNumber,
+                position.column,
+                position.lineNumber,
+                position.column
+              ),
+              text: '|《・》',
+              forceMoveMarkers: true,
+            },
+          ]);
 
           // カーソルを|《の間に移動（|の直後）
           setTimeout(() => {
             const newPosition = {
               lineNumber: position.lineNumber,
-              column: position.column + 1
+              column: position.column + 1,
             };
             ed.setPosition(newPosition);
           }, 0);
         }
-      }
+      },
     });
 
     return [d1, d2];
@@ -168,7 +228,13 @@ function App() {
     if (editorRef.current && monacoRef.current) {
       // 既存のアクションがあれば dispose してから再登録（安全に更新する）
       if (rubyActionDisposablesRef.current) {
-        rubyActionDisposablesRef.current.forEach(d => { try { d.dispose(); } catch (e) { /* ignore */ } });
+        rubyActionDisposablesRef.current.forEach((d) => {
+          try {
+            d.dispose();
+          } catch {
+            /* ignore */
+          }
+        });
         rubyActionDisposablesRef.current = null;
       }
       if (settings.showRubyToolbar) {
@@ -195,17 +261,17 @@ function App() {
     }
   }, [currentPath]);
 
-  // currentPath の変更を useEditorSettings に通知
+  // currentPath の変更を config に通知
   useEffect(() => {
     if (!currentPath) return;
     const updateCacheWithPath = async () => {
-      const prevCache = await window.electronAPI.readCache() || {};
-      const newCache = { ...prevCache, lastFile: currentPath };
+      const prevCache = (await readConfig()) || {};
+      const newCache: Record<string, unknown> = { ...prevCache, lastFile: currentPath };
       const lastSeparator = Math.max(currentPath.lastIndexOf('\\'), currentPath.lastIndexOf('/'));
       if (lastSeparator !== -1) {
         newCache.lastDir = currentPath.substring(0, lastSeparator);
       }
-      await window.electronAPI.writeCache(newCache);
+      await writeConfig(newCache);
     };
     updateCacheWithPath();
   }, [currentPath]);
@@ -213,7 +279,7 @@ function App() {
   // キャッシュからプレビュー幅を読み込む
   useEffect(() => {
     const loadPreviewWidth = async () => {
-      const cache = await window.electronAPI.readCache() || {};
+      const cache = (await readConfig()) || {};
       if (cache.previewWidth && typeof cache.previewWidth === 'number') {
         setPreviewWidth(cache.previewWidth);
       }
@@ -224,9 +290,9 @@ function App() {
   // プレビュー幅がキャッシュに保存される
   useEffect(() => {
     const savePreviewWidth = async () => {
-      const prevCache = await window.electronAPI.readCache() || {};
+      const prevCache = (await readConfig()) || {};
       const newCache = { ...prevCache, previewWidth };
-      await window.electronAPI.writeCache(newCache);
+      await writeConfig(newCache);
     };
     savePreviewWidth();
   }, [previewWidth]);
@@ -234,7 +300,7 @@ function App() {
   // キャッシュからMarkdownプレビュー表示状態を読み込む
   useEffect(() => {
     const loadPreviewVisibility = async () => {
-      const cache = await window.electronAPI.readCache() || {};
+      const cache = (await readConfig()) || {};
       if (cache.isPreviewVisible !== undefined && typeof cache.isPreviewVisible === 'boolean') {
         setIsPreviewVisible(cache.isPreviewVisible);
       }
@@ -245,9 +311,9 @@ function App() {
   // Markdownプレビュー表示状態がキャッシュに保存される
   useEffect(() => {
     const savePreviewVisibility = async () => {
-      const prevCache = await window.electronAPI.readCache() || {};
+      const prevCache = (await readConfig()) || {};
       const newCache = { ...prevCache, isPreviewVisible };
-      await window.electronAPI.writeCache(newCache);
+      await writeConfig(newCache);
     };
     savePreviewVisibility();
   }, [isPreviewVisible]);
@@ -255,24 +321,25 @@ function App() {
   // 見出し設定を読み込む
   useEffect(() => {
     const loadHeadings = async () => {
-      let headings = await window.electronAPI.readHeadings();
-      if (!headings || headings.length === 0) {
+      let headings = (await readHeadings()) as { head: string; level: number }[] | null;
+      if (!headings || !Array.isArray(headings) || headings.length === 0) {
         // デフォルト設定
         headings = [
-          { head: "^第[0-9０-９一二三四五六七八九十百千万]+章", level: 1 },
-          { head: "^第[0-9０-９一二三四五六七八九十百千万]+話", level: 2 },
-          { head: "^第[0-9０-９一二三四五六七八九十百千万]+条", level: 1 },
-          { head: "^第[0-9０-９一二三四五六七八九十百千万]+項", level: 2 },
-          { head: "^第[0-9０-９一二三四五六七八九十百千万]+号", level: 3 }
+          { head: '^第[0-9０-９一二三四五六七八九十百千万]+章', level: 1 },
+          { head: '^第[0-9０-９一二三四五六七八九十百千万]+話', level: 2 },
+          { head: '^第[0-9０-９一二三四五六七八九十百千万]+条', level: 1 },
+          { head: '^第[0-9０-９一二三四五六七八九十百千万]+項', level: 2 },
+          { head: '^第[0-9０-９一二三四五六七八九十百千万]+号', level: 3 },
         ];
-        await window.electronAPI.saveHeadings(headings);
+        await saveHeadings(headings);
       }
       setHeadingSettings(headings);
     };
     loadHeadings();
   }, []);
 
-  const editorRef = useRef<any>(null); const monacoRef = useRef<any>(null);
+  const editorRef = useRef<any>(null);
+  const monacoRef = useRef<any>(null);
   const rubyActionDisposablesRef = useRef<monaco.IDisposable[] | null>(null);
 
   // 見出し抽出ロジック（デバウンス付き）
@@ -287,9 +354,9 @@ function App() {
       const lines = code.split(/\r?\n/);
 
       // 設定された正規表現リストを作成
-      const headingRegexes = headingSettings.map(s => ({
+      const headingRegexes = headingSettings.map((s) => ({
         regex: new RegExp(s.head),
-        level: s.level
+        level: s.level,
       }));
 
       lines.forEach((line, index) => {
@@ -300,7 +367,7 @@ function App() {
             items.push({
               level: setting.level,
               label: line.trim(),
-              line: index + 1
+              line: index + 1,
             });
             matched = true;
             break;
@@ -316,7 +383,7 @@ function App() {
             items.push({
               level,
               label: label || `(レベル ${level} の見出し)`,
-              line: index + 1
+              line: index + 1,
             });
           }
         }
@@ -353,24 +420,75 @@ function App() {
           [/"/, { token: 'custom-dialogue', next: '@dialogue_double_quote_half' }],
           [/'/, { token: 'custom-dialogue', next: '@dialogue_single_quote_half' }],
         ],
-        dialogue_kagi: [[/」/, 'custom-dialogue', '@pop'], [/./, 'custom-dialogue']],
-        dialogue_double_kagi: [[/』/, 'custom-dialogue', '@pop'], [/./, 'custom-dialogue']],
-        dialogue_sumi: [[/】/, 'custom-dialogue', '@pop'], [/./, 'custom-dialogue']],
-        dialogue_yama: [[/〉/, 'custom-dialogue', '@pop'], [/./, 'custom-dialogue']],
-        dialogue_double_yama: [[/》/, 'custom-dialogue', '@pop'], [/./, 'custom-dialogue']],
-        dialogue_maru_full: [[/）/, 'custom-dialogue', '@pop'], [/./, 'custom-dialogue']],
-        dialogue_maru_half: [[/\)/, 'custom-dialogue', '@pop'], [/./, 'custom-dialogue']],
-        dialogue_nami_full: [[/｝/, 'custom-dialogue', '@pop'], [/./, 'custom-dialogue']],
-        dialogue_nami_half: [[/\}/, 'custom-dialogue', '@pop'], [/./, 'custom-dialogue']],
-        dialogue_kaku_full: [[/］/, 'custom-dialogue', '@pop'], [/./, 'custom-dialogue']],
-        dialogue_kaku_half: [[/\]/, 'custom-dialogue', '@pop'], [/./, 'custom-dialogue']],
-        dialogue_double_quote_full: [[/”/, 'custom-dialogue', '@pop'], [/./, 'custom-dialogue']],
-        dialogue_double_quote_start: [[/”/, 'custom-dialogue', '@pop'], [/./, 'custom-dialogue']],
-        dialogue_single_quote_full: [[/’/, 'custom-dialogue', '@pop'], [/./, 'custom-dialogue']],
-        dialogue_single_quote_start: [[/’/, 'custom-dialogue', '@pop'], [/./, 'custom-dialogue']],
-        dialogue_double_quote_half: [[/"/, 'custom-dialogue', '@pop'], [/./, 'custom-dialogue']],
-        dialogue_single_quote_half: [[/'/, 'custom-dialogue', '@pop'], [/./, 'custom-dialogue']],
-      }
+        dialogue_kagi: [
+          [/」/, 'custom-dialogue', '@pop'],
+          [/./, 'custom-dialogue'],
+        ],
+        dialogue_double_kagi: [
+          [/』/, 'custom-dialogue', '@pop'],
+          [/./, 'custom-dialogue'],
+        ],
+        dialogue_sumi: [
+          [/】/, 'custom-dialogue', '@pop'],
+          [/./, 'custom-dialogue'],
+        ],
+        dialogue_yama: [
+          [/〉/, 'custom-dialogue', '@pop'],
+          [/./, 'custom-dialogue'],
+        ],
+        dialogue_double_yama: [
+          [/》/, 'custom-dialogue', '@pop'],
+          [/./, 'custom-dialogue'],
+        ],
+        dialogue_maru_full: [
+          [/）/, 'custom-dialogue', '@pop'],
+          [/./, 'custom-dialogue'],
+        ],
+        dialogue_maru_half: [
+          [/\)/, 'custom-dialogue', '@pop'],
+          [/./, 'custom-dialogue'],
+        ],
+        dialogue_nami_full: [
+          [/｝/, 'custom-dialogue', '@pop'],
+          [/./, 'custom-dialogue'],
+        ],
+        dialogue_nami_half: [
+          [/\}/, 'custom-dialogue', '@pop'],
+          [/./, 'custom-dialogue'],
+        ],
+        dialogue_kaku_full: [
+          [/］/, 'custom-dialogue', '@pop'],
+          [/./, 'custom-dialogue'],
+        ],
+        dialogue_kaku_half: [
+          [/\]/, 'custom-dialogue', '@pop'],
+          [/./, 'custom-dialogue'],
+        ],
+        dialogue_double_quote_full: [
+          [/”/, 'custom-dialogue', '@pop'],
+          [/./, 'custom-dialogue'],
+        ],
+        dialogue_double_quote_start: [
+          [/”/, 'custom-dialogue', '@pop'],
+          [/./, 'custom-dialogue'],
+        ],
+        dialogue_single_quote_full: [
+          [/’/, 'custom-dialogue', '@pop'],
+          [/./, 'custom-dialogue'],
+        ],
+        dialogue_single_quote_start: [
+          [/’/, 'custom-dialogue', '@pop'],
+          [/./, 'custom-dialogue'],
+        ],
+        dialogue_double_quote_half: [
+          [/"/, 'custom-dialogue', '@pop'],
+          [/./, 'custom-dialogue'],
+        ],
+        dialogue_single_quote_half: [
+          [/'/, 'custom-dialogue', '@pop'],
+          [/./, 'custom-dialogue'],
+        ],
+      },
     });
 
     // テーマ定義
@@ -392,7 +510,7 @@ function App() {
         'editor.selectionBackground': '#F6D6BA',
         'editorLineNumber.foreground': '#A08674',
         'editorCursor.foreground': '#563C30',
-      }
+      },
     });
 
     monaco.editor.defineTheme('moonlight', {
@@ -413,7 +531,7 @@ function App() {
         'editor.selectionBackground': '#2F334D',
         'editorLineNumber.foreground': '#444B6A',
         'editorCursor.foreground': '#C9B27A',
-      }
+      },
     });
 
     monaco.editor.defineTheme('nagaragawa', {
@@ -434,7 +552,7 @@ function App() {
         'editor.selectionBackground': '#81D4FA',
         'editorLineNumber.foreground': '#90A4AE',
         'editorCursor.foreground': '#03A9F4',
-      }
+      },
     });
 
     monaco.editor.defineTheme('katana', {
@@ -455,7 +573,7 @@ function App() {
         'editor.selectionBackground': '#3C4C55',
         'editorLineNumber.foreground': '#757575',
         'editorCursor.foreground': '#D4AF37',
-      }
+      },
     });
 
     // Dark/Light にも追加
@@ -463,26 +581,43 @@ function App() {
       base: 'vs-dark',
       inherit: true,
       rules: [{ token: 'custom-dialogue', foreground: 'CE9178' }],
-      colors: {}
+      colors: {},
     });
     monaco.editor.defineTheme('light-custom', {
       base: 'vs',
       inherit: true,
       rules: [{ token: 'custom-dialogue', foreground: '1a5fb4' }],
-      colors: {}
+      colors: {},
     });
-  }
-  const typewriterModeRef = useRef(settings.typewriterMode)
+  };
+  const typewriterModeRef = useRef(settings.typewriterMode);
 
-  useEffect(() => { typewriterModeRef.current = settings.typewriterMode; }, [settings.typewriterMode])
+  useEffect(() => {
+    typewriterModeRef.current = settings.typewriterMode;
+  }, [settings.typewriterMode]);
 
-  useEffect(() => { setStats(prev => ({ ...prev, lines: code.split('\n').length, chars: code.length })); }, [code])
+  useEffect(() => {
+    setStats((prev) => ({ ...prev, lines: code.split('\n').length, chars: code.length }));
+  }, [code]);
   useEffect(() => {
     if (editorRef.current && monacoRef.current) {
-      editorRef.current.updateOptions({ lineNumbers: settings.lineNumbers, rulers: [], fontSize: settings.fontSize, fontFamily: settings.fontFamily, autoIndent: settings.autoIndent ? 'full' : 'none', wordWrap: settings.wordWrap, wordWrapColumn: settings.showRuler ? undefined : settings.rulerPosition, lineHeight: settings.fontSize * settings.lineHeight });
+      editorRef.current.updateOptions({
+        lineNumbers: settings.lineNumbers,
+        rulers: [],
+        fontSize: settings.fontSize,
+        fontFamily: settings.fontFamily,
+        autoIndent: settings.autoIndent ? 'full' : 'none',
+        wordWrap: settings.wordWrap,
+        wordWrapColumn: settings.showRuler ? undefined : settings.rulerPosition,
+        lineHeight: settings.fontSize * settings.lineHeight,
+      });
     }
   }, [settings]);
-  useEffect(() => { document.title = currentPath ? `Kotoori - ${currentPath.split(/[/\\]/).pop()} ` : 'Kotoori - 新しいテキスト'; }, [currentPath])
+  useEffect(() => {
+    document.title = currentPath
+      ? `Kotoori - ${currentPath.split(/[/\\]/).pop()} `
+      : 'Kotoori - 新しいテキスト';
+  }, [currentPath]);
 
   // ========================
   // メニューアクション関数の定義
@@ -490,20 +625,22 @@ function App() {
 
   // ファイル系メニュー
   const handleNewFile = async () => {
-    await window.electronAPI.createNewWindow();
+    // Tauriでは新規ウィンドウの代わりに現在のウィンドウで新規作成
+    await createNew();
   };
 
   const handleOpenFile = async (filePath: string) => {
     if (!currentPath && !isDirtyRef.current && codeRef.current === '') {
       await openFile(filePath);
     } else {
-      window.electronAPI.openNewWindow(filePath);
+      // Tauriでは新規ウィンドウは未サポートのため同一ウィンドウで開く
+      await openFile(filePath);
     }
     setView('editor');
   };
 
   const handleOpenFileDialog = async () => {
-    await window.electronAPI.openFileDialog();
+    await openFileDialog();
   };
 
   const handleSaveFile = async (forceDialog?: boolean) => {
@@ -584,11 +721,13 @@ function App() {
       const selectedText = editor.getModel().getValueInRange(range);
       const rubyText = `|${selectedText}《》`;
 
-      editor.executeEdits('insert-ruby', [{
-        range: range,
-        text: rubyText,
-        forceMoveMarkers: true
-      }]);
+      editor.executeEdits('insert-ruby', [
+        {
+          range: range,
+          text: rubyText,
+          forceMoveMarkers: true,
+        },
+      ]);
 
       // カーソルを《の次に移動
       const newPosition = new (monacoRef.current as any).Position(
@@ -600,16 +739,18 @@ function App() {
       // 選択文字列がない場合
       const position = editor.getPosition();
       if (position) {
-        editor.executeEdits('insert-ruby', [{
-          range: new (monacoRef.current as any).Range(
-            position.lineNumber,
-            position.column,
-            position.lineNumber,
-            position.column
-          ),
-          text: '|《》',
-          forceMoveMarkers: true
-        }]);
+        editor.executeEdits('insert-ruby', [
+          {
+            range: new (monacoRef.current as any).Range(
+              position.lineNumber,
+              position.column,
+              position.lineNumber,
+              position.column
+            ),
+            text: '|《》',
+            forceMoveMarkers: true,
+          },
+        ]);
 
         // カーソルを|の次に移動
         const newPosition = new (monacoRef.current as any).Position(
@@ -633,13 +774,18 @@ function App() {
       const selectedText = editor.getModel().getValueInRange(range);
 
       // 各文字に《・》を付ける
-      const dotsText = selectedText.split('').map((char: string) => `|${char}《・》`).join('');
+      const dotsText = selectedText
+        .split('')
+        .map((char: string) => `|${char}《・》`)
+        .join('');
 
-      editor.executeEdits('insert-emphasis-dots', [{
-        range: range,
-        text: dotsText,
-        forceMoveMarkers: true
-      }]);
+      editor.executeEdits('insert-emphasis-dots', [
+        {
+          range: range,
+          text: dotsText,
+          forceMoveMarkers: true,
+        },
+      ]);
 
       // カーソルを最後の》の次に移動
       const newPosition = new (monacoRef.current as any).Position(
@@ -652,7 +798,11 @@ function App() {
   };
 
   // Markdown挿入汎用関数
-  const handleInsertMarkdown = (prefix: string, suffix: string = '', isLineStart: boolean = false) => {
+  const handleInsertMarkdown = (
+    prefix: string,
+    suffix: string = '',
+    isLineStart: boolean = false
+  ) => {
     if (!editorRef.current || !monacoRef.current) return;
     const editor = editorRef.current;
     const selection = editor.getSelection();
@@ -669,7 +819,7 @@ function App() {
         edits.push({
           range: new monacoRef.current.Range(i, 1, i, 1),
           text: prefix,
-          forceMoveMarkers: true
+          forceMoveMarkers: true,
         });
       }
 
@@ -679,17 +829,19 @@ function App() {
       const selectedText = model.getValueInRange(selection);
       const newText = `${prefix}${selectedText}${suffix}`;
 
-      editor.executeEdits('insert-markdown-wrap', [{
-        range: selection,
-        text: newText,
-        forceMoveMarkers: true
-      }]);
+      editor.executeEdits('insert-markdown-wrap', [
+        {
+          range: selection,
+          text: newText,
+          forceMoveMarkers: true,
+        },
+      ]);
 
       if (selection.isEmpty()) {
         // カーソルを囲みの内側に移動
         const newPosition = {
           lineNumber: selection.startLineNumber,
-          column: selection.startColumn + prefix.length
+          column: selection.startColumn + prefix.length,
         };
         editor.setPosition(newPosition);
       }
@@ -701,114 +853,97 @@ function App() {
   const handleMenuClick = async (type: string, data?: any) => {
     if (type === 'open') {
       await handleOpenFileDialog();
-    }
-    else if (type === 'open-candidate') {
+    } else if (type === 'open-candidate') {
       await handleOpenFile(data as string);
-    }
-    else if (type === 'new') {
+    } else if (type === 'new') {
       await handleNewFile();
-    }
-    else if (type === 'save') {
+    } else if (type === 'save') {
       await handleSaveFile(false);
-    }
-    else if (type === 'save-as') {
+    } else if (type === 'save-as') {
       await handleSaveFile(true);
-    }
-    else if (type === 'save-as-encoding') {
+    } else if (type === 'save-as-encoding') {
       await handleSaveAsEncoding(data);
-    }
-    else if (type === 'open-as-encoding') {
+    } else if (type === 'open-as-encoding') {
       // 現在開いているファイルを指定のエンコードで再読み込み
       if (currentPath) {
         await openFile(currentPath, data);
       }
-    }
-    else if (type === 'show-history') {
+    } else if (type === 'show-history') {
       handleShowHistory();
-    }
-    else if (type === 'show-settings') {
+    } else if (type === 'show-settings') {
       handleShowSettings();
-    }
-    else if (type === 'show-editor') {
+    } else if (type === 'show-editor') {
       handleShowEditor();
-    }
-    else if (type === 'find') {
+    } else if (type === 'find') {
       handleFindReplace('find');
-    }
-    else if (type === 'replace') {
+    } else if (type === 'replace') {
       handleFindReplace('replace');
     }
     // 編集機能のハンドリング
     else if (type === 'undo') {
       editorRef.current?.trigger('keyboard', 'undo', null);
-    }
-    else if (type === 'redo') {
+    } else if (type === 'redo') {
       editorRef.current?.trigger('keyboard', 'redo', null);
-    }
-    else if (type === 'cut') {
+    } else if (type === 'cut') {
       editorRef.current?.focus();
       setTimeout(() => {
         editorRef.current?.trigger('keyboard', 'editor.action.clipboardCutAction', null);
       }, 0);
-    }
-    else if (type === 'copy') {
+    } else if (type === 'copy') {
       editorRef.current?.focus();
       setTimeout(() => {
         editorRef.current?.trigger('keyboard', 'editor.action.clipboardCopyAction', null);
       }, 0);
-    }
-    else if (type === 'paste') {
+    } else if (type === 'paste') {
       editorRef.current?.focus();
       setTimeout(async () => {
         // クリップボードからテキストを取得
-        const clipboardText = await window.electronAPI.getClipboardText();
+        const clipboardText = await getClipboardText();
         if (clipboardText) {
           // エディタに現在の選択範囲がある場合、置換する
           const editor = editorRef.current;
           if (editor) {
             const selection = editor.getSelection();
             if (selection) {
-              editor.executeEdits('paste', [{
-                range: selection,
-                text: clipboardText,
-                forceMoveMarkers: true
-              }]);
+              editor.executeEdits('paste', [
+                {
+                  range: selection,
+                  text: clipboardText,
+                  forceMoveMarkers: true,
+                },
+              ]);
             } else {
               // 選択範囲がない場合、カーソル位置に挿入
               const position = editor.getPosition();
               if (position) {
-                editor.executeEdits('paste', [{
-                  range: new (monacoRef.current as any).Range(
-                    position.lineNumber,
-                    position.column,
-                    position.lineNumber,
-                    position.column
-                  ),
-                  text: clipboardText,
-                  forceMoveMarkers: true
-                }]);
+                editor.executeEdits('paste', [
+                  {
+                    range: new (monacoRef.current as any).Range(
+                      position.lineNumber,
+                      position.column,
+                      position.lineNumber,
+                      position.column
+                    ),
+                    text: clipboardText,
+                    forceMoveMarkers: true,
+                  },
+                ]);
               }
             }
           }
         }
       }, 0);
-    }
-    else if (type === 'delete') {
+    } else if (type === 'delete') {
       editorRef.current?.trigger('keyboard', 'deleteRight', null);
-    }
-    else if (type === 'selectAll') {
+    } else if (type === 'selectAll') {
       editorRef.current?.trigger('keyboard', 'editor.action.selectAll', null);
-    }
-    else if (type === 'insert-ruby') {
+    } else if (type === 'insert-ruby') {
       handleInsertRuby();
-    }
-    else if (type === 'insert-emphasis-dots') {
+    } else if (type === 'insert-emphasis-dots') {
       handleInsertEmphasisDots();
-    }
-    else if (type === 'set-preview') {
+    } else if (type === 'set-preview') {
       setIsPreviewVisible(data);
-    }
-    else if (type === 'quit') {
+    } else if (type === 'quit') {
       // 終了前にファイルを保存する必要がある場合
       if (isDirtyRef.current) {
         const savedPath = await saveFile();
@@ -817,58 +952,37 @@ function App() {
           return;
         }
       }
-      // このWindowだけを閉じる（他のWindowは開き続ける）
-      await window.electronAPI.confirmAction('close');
-    }
-    else if (type.startsWith('set-')) {
+      // ウィンドウを閉じる
+      await tauriClose();
+    } else if (type.startsWith('set-')) {
       updateSettings(type as any, data);
     }
   };
 
-  useEffect(() => {
-    const removeMenuListener = window.electronAPI.onMenuClick(async (_event, type, data) => {
-      await handleMenuClick(type, data);
-    })
-    const removeAutoSaveListener = window.electronAPI.onAutoSaveCheck(async (_, action) => {
-      console.log('[OnExit] Checking auto save before:', action);
-
+  // Tauriウィンドウ閉じイベント: 変更がある場合は保存してから閉じる
+  useTauriCloseRequest(async (): Promise<boolean> => {
+    console.log(
+      '[OnClose] Checking auto save before close. isDirty:',
+      isDirtyRef.current,
+      'currentPath:',
+      currentPath
+    );
+    if (currentPath && isDirtyRef.current) {
       try {
-        // 終了イベント（'quit' または 'close'）の場合、変更内容を確実に保存
-        if (action === 'quit' || action === 'close') {
-          console.log('[OnExit] Force saving on exit. isDirty:', isDirtyRef.current, 'currentPath:', currentPath);
-
-          // ファイルが開かれていて、変更がある場合は保存
-          if (currentPath && isDirtyRef.current) {
-            try {
-              const savedPath = await saveFile();
-              console.log('[OnExit] Save completed:', savedPath);
-            } catch (error) {
-              console.error('[OnExit] Error during save:', error);
-            }
-          } else if (!currentPath && isDirtyRef.current) {
-            // 新規ファイルの場合は、checkAutoFirstSave で既に処理されているはず
-            console.log('[OnExit] New file detected, skipping save');
-          }
-        } else {
-          // その他のアクションの場合は従来通り
-          if (isDirtyRef.current) {
-            const p = await saveFile();
-            if (p) await window.electronAPI.confirmAction(action);
-          }
-          else await window.electronAPI.confirmAction(action)
-        }
-      } finally {
-        // 終了アクション時は必ず終了処理を続行
-        if (action === 'quit' || action === 'close') {
-          await window.electronAPI.confirmAction(action);
-        }
+        const savedPath = await saveFile();
+        console.log('[OnClose] Save completed:', savedPath);
+      } catch (error) {
+        console.error('[OnClose] Error during save:', error);
       }
-    })
-    return () => { removeMenuListener(); removeAutoSaveListener(); }
-  }, [saveFile, createNew, isDirtyRef, updateSettings, handleMenuClick, currentPath]);
+    } else if (!currentPath && isDirtyRef.current) {
+      console.log('[OnClose] New file detected, skipping save');
+    }
+    return true; // 常に閉じることを許可
+  });
 
   const handleEditorDidMount: OnMount = (editor, monaco) => {
-    editorRef.current = editor; monacoRef.current = monaco;
+    editorRef.current = editor;
+    monacoRef.current = monaco;
     setIsEditorReady(true);
 
     // エディタにフォーカスを設定
@@ -878,11 +992,11 @@ function App() {
     if (cursorPositionRef.current) {
       editor.setPosition({
         lineNumber: cursorPositionRef.current.line,
-        column: cursorPositionRef.current.column
+        column: cursorPositionRef.current.column,
       });
       editor.revealPositionInCenter({
         lineNumber: cursorPositionRef.current.line,
-        column: cursorPositionRef.current.column
+        column: cursorPositionRef.current.column,
       });
     }
 
@@ -890,7 +1004,7 @@ function App() {
     editor.onDidChangeCursorPosition((e: any) => {
       cursorPositionRef.current = {
         line: e.position.lineNumber,
-        column: e.position.column
+        column: e.position.column,
       };
     });
 
@@ -908,17 +1022,19 @@ function App() {
         const startLineNumber = selection.startLineNumber;
         const startColumn = selection.startColumn;
 
-        editor.executeEdits('insert-ruby', [{
-          range: selection,
-          text: rubyFormat,
-          forceMoveMarkers: true
-        }]);
+        editor.executeEdits('insert-ruby', [
+          {
+            range: selection,
+            text: rubyFormat,
+            forceMoveMarkers: true,
+          },
+        ]);
 
         // カーソルを《》の間に移動（《の直後）
         setTimeout(() => {
           const newPosition = {
             lineNumber: startLineNumber,
-            column: startColumn + selectedText.length + 2 // |と選択文字とルビ記号分
+            column: startColumn + selectedText.length + 2, // |と選択文字とルビ記号分
           };
           editor.setPosition(newPosition);
         }, 0);
@@ -927,17 +1043,24 @@ function App() {
         const position = editor.getPosition();
         if (!position) return;
 
-        editor.executeEdits('insert-ruby-empty', [{
-          range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
-          text: '|《》',
-          forceMoveMarkers: true
-        }]);
+        editor.executeEdits('insert-ruby-empty', [
+          {
+            range: new monaco.Range(
+              position.lineNumber,
+              position.column,
+              position.lineNumber,
+              position.column
+            ),
+            text: '|《》',
+            forceMoveMarkers: true,
+          },
+        ]);
 
         // カーソルを|《の間に移動（|の直後）
         setTimeout(() => {
           const newPosition = {
             lineNumber: position.lineNumber,
-            column: position.column + 1
+            column: position.column + 1,
           };
           editor.setPosition(newPosition);
         }, 0);
@@ -954,21 +1077,26 @@ function App() {
 
       if (selectedText) {
         // 文字が選択されている場合：各文字を|文《・》の形式に変換
-        const dotFormat = selectedText.split('').map(char => `|${char}《・》`).join('');
+        const dotFormat = selectedText
+          .split('')
+          .map((char) => `|${char}《・》`)
+          .join('');
         const startLineNumber = selection.startLineNumber;
         const startColumn = selection.startColumn;
 
-        editor.executeEdits('insert-dot', [{
-          range: selection,
-          text: dotFormat,
-          forceMoveMarkers: true
-        }]);
+        editor.executeEdits('insert-dot', [
+          {
+            range: selection,
+            text: dotFormat,
+            forceMoveMarkers: true,
+          },
+        ]);
 
         // カーソルを最後の》の後に移動
         setTimeout(() => {
           const newPosition = {
             lineNumber: startLineNumber,
-            column: startColumn + dotFormat.length
+            column: startColumn + dotFormat.length,
           };
           editor.setPosition(newPosition);
         }, 0);
@@ -977,17 +1105,24 @@ function App() {
         const position = editor.getPosition();
         if (!position) return;
 
-        editor.executeEdits('insert-dot-empty', [{
-          range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
-          text: '|《・》',
-          forceMoveMarkers: true
-        }]);
+        editor.executeEdits('insert-dot-empty', [
+          {
+            range: new monaco.Range(
+              position.lineNumber,
+              position.column,
+              position.lineNumber,
+              position.column
+            ),
+            text: '|《・》',
+            forceMoveMarkers: true,
+          },
+        ]);
 
         // カーソルを|《の間に移動（|の直後）
         setTimeout(() => {
           const newPosition = {
             lineNumber: position.lineNumber,
-            column: position.column + 1
+            column: position.column + 1,
           };
           editor.setPosition(newPosition);
         }, 0);
@@ -999,21 +1134,29 @@ function App() {
     }
 
     const updateStats = () => {
-      const position = editor.getPosition(); const model = editor.getModel();
-      if (position && model) setStats(prev => ({ ...prev, currentLineChars: model.getLineContent(position.lineNumber).length, line: position.lineNumber, column: position.column }));
-    }
+      const position = editor.getPosition();
+      const model = editor.getModel();
+      if (position && model)
+        setStats((prev) => ({
+          ...prev,
+          currentLineChars: model.getLineContent(position.lineNumber).length,
+          line: position.lineNumber,
+          column: position.column,
+        }));
+    };
     editor.onDidChangeCursorPosition(updateStats);
     editor.onDidChangeModelContent(updateStats);
     editor.onDidChangeCursorSelection((e: any) => {
       const model = editor.getModel();
-      if (model) setStats(prev => ({ ...prev, selectedChars: model.getValueInRange(e.selection).length }));
+      if (model)
+        setStats((prev) => ({ ...prev, selectedChars: model.getValueInRange(e.selection).length }));
       if (typewriterModeRef.current) {
         const position = editor.getPosition();
         if (position) editor.revealLineInCenter(position.lineNumber, 1 /* Smooth */);
       }
     });
     updateStats();
-  }
+  };
 
   const handleOutlineClick = (line: number) => {
     if (editorRef.current) {
@@ -1021,7 +1164,7 @@ function App() {
       editorRef.current.setPosition({ lineNumber: line, column: 1 });
       editorRef.current.focus();
     }
-  }
+  };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -1039,8 +1182,8 @@ function App() {
         const filePath = file.path;
 
         if (filePath) {
-          const isBinary = await window.electronAPI.isBinaryFile(filePath);
-          if (isBinary) {
+          const isBin = await isBinaryFile(filePath);
+          if (isBin) {
             alert(`バイナリファイルは開けません: ${filePath.split(/[/\\]/).pop()}`);
             continue;
           }
@@ -1049,8 +1192,8 @@ function App() {
             // 最初のファイルかつ、現在のアプリでファイルを開いていない場合はそのまま開く
             await openFile(filePath);
           } else {
-            // ファイルを開いている場合、または2つ目以降のファイルは新規ウィンドウで開く
-            window.electronAPI.openNewWindow(filePath);
+            // ファイルを開いている場合、または2つ目以降のファイルは同一ウィンドウで開く（Tauri: 新規ウィンドウ未サポート）
+            await openFile(filePath);
           }
         }
       }
@@ -1066,7 +1209,9 @@ function App() {
     >
       <MenuBar
         onMenuClick={handleMenuClick}
-        title={currentPath ? `Kotoori - ${currentPath.split(/[/\\]/).pop()}` : 'Kotoori - 新しいテキスト'}
+        title={
+          currentPath ? `Kotoori - ${currentPath.split(/[/\\]/).pop()}` : 'Kotoori - 新しいテキスト'
+        }
         theme={settings.theme}
         checkedItems={{
           'view:line-numbers': settings.lineNumbers === 'on',
@@ -1077,7 +1222,7 @@ function App() {
           'view:word-wrap': settings.wordWrap === 'on',
           'view:preview': isPreviewVisible,
           [`theme:${settings.theme}`]: true,
-          [`font-size:${settings.fontSize}`]: true
+          [`font-size:${settings.fontSize}`]: true,
         }}
       />
       <ToolBar
@@ -1144,23 +1289,56 @@ function App() {
                     updateSettings({ outlineWidth: newWidth });
                   }}
                 />
-
               </div>
             )}
-            <div className={`theme-${settings.theme}`} style={{ flexGrow: 1, height: '100%', display: 'flex', flexDirection: 'column', minWidth: 0, position: 'relative', gap: 0 }}>
+            <div
+              className={`theme-${settings.theme}`}
+              style={{
+                flexGrow: 1,
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                minWidth: 0,
+                position: 'relative',
+                gap: 0,
+              }}
+            >
               {/* エディタとプレビューのメインセクション */}
-              <div className={`editor-and-preview-wrapper`} style={{ display: 'flex', width: '100%', flex: 1, overflow: 'hidden', flexDirection: 'row' }}>
+              <div
+                className={`editor-and-preview-wrapper`}
+                style={{
+                  display: 'flex',
+                  width: '100%',
+                  flex: 1,
+                  overflow: 'hidden',
+                  flexDirection: 'row',
+                }}
+              >
                 {/* エディタセクション */}
-                <div style={{ flex: isPreviewVisible ? `1 1 ${100 - previewWidth}%` : '1 1 100%', display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
+                <div
+                  style={{
+                    flex: isPreviewVisible ? `1 1 ${100 - previewWidth}%` : '1 1 100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    overflow: 'hidden',
+                    position: 'relative',
+                  }}
+                >
                   {settings.showRuler && (
                     <div
                       style={{
                         position: 'absolute',
                         left: (() => {
                           if (!editorRef.current) return 0;
-                          const fontInfo = editorRef.current.getOption(monacoRef.current.editor.EditorOption.fontInfo);
+                          const fontInfo = editorRef.current.getOption(
+                            monacoRef.current.editor.EditorOption.fontInfo
+                          );
                           const margin = settings.lineNumbers === 'on' ? 58 : 10;
-                          return margin + (fontInfo.typicalHalfwidthCharacterWidth * settings.rulerPosition) + settings.rulerOffset;
+                          return (
+                            margin +
+                            fontInfo.typicalHalfwidthCharacterWidth * settings.rulerPosition +
+                            settings.rulerOffset
+                          );
                         })(),
                         top: 0,
                         bottom: 0,
@@ -1168,7 +1346,7 @@ function App() {
                         backgroundColor: 'var(--accent-color)',
                         opacity: 0.3,
                         zIndex: 10,
-                        pointerEvents: 'none'
+                        pointerEvents: 'none',
                       }}
                     />
                   )}
@@ -1176,13 +1354,44 @@ function App() {
                     <Editor
                       height="100%"
                       width="100%"
-                      language={settings.highlightDialogue ? "kotoori-text" : "plaintext"}
+                      language={settings.highlightDialogue ? 'kotoori-text' : 'plaintext'}
                       value={code}
-                      onChange={(v) => { const n = v || ''; setCode(n); setIsDirty(true); if (settings.enableAutoSave) checkAutoFirstSave(n, settings.defaultStoragePath); }}
+                      onChange={(v) => {
+                        const n = v || '';
+                        setCode(n);
+                        setIsDirty(true);
+                        if (settings.enableAutoSave)
+                          checkAutoFirstSave(n, settings.defaultStoragePath);
+                      }}
                       beforeMount={handleBeforeMount}
                       onMount={handleEditorDidMount}
-                      theme={settings.theme === 'vs-dark' ? 'vs-dark-custom' : settings.theme === 'light' ? 'light-custom' : settings.theme}
-                      options={{ lineNumbers: settings.lineNumbers, rulers: settings.showRuler ? [] : [], fontSize: settings.fontSize, fontFamily: settings.fontFamily, autoIndent: settings.autoIndent ? 'full' : 'none', wordWrap: settings.wordWrap, wordWrapColumn: settings.showRuler ? undefined : settings.rulerPosition, automaticLayout: true, quickSuggestions: false, suggestOnTriggerCharacters: false, snippetSuggestions: 'none', wordBasedSuggestions: 'off', hover: { enabled: false }, renderValidationDecorations: 'off', lineHeight: settings.fontSize * settings.lineHeight, minimap: { enabled: settings.showMinimap }, renderWhitespace: settings.renderWhitespace ? 'all' : 'none', renderLineHighlight: 'line' }}
+                      theme={
+                        settings.theme === 'vs-dark'
+                          ? 'vs-dark-custom'
+                          : settings.theme === 'light'
+                            ? 'light-custom'
+                            : settings.theme
+                      }
+                      options={{
+                        lineNumbers: settings.lineNumbers,
+                        rulers: settings.showRuler ? [] : [],
+                        fontSize: settings.fontSize,
+                        fontFamily: settings.fontFamily,
+                        autoIndent: settings.autoIndent ? 'full' : 'none',
+                        wordWrap: settings.wordWrap,
+                        wordWrapColumn: settings.showRuler ? undefined : settings.rulerPosition,
+                        automaticLayout: true,
+                        quickSuggestions: false,
+                        suggestOnTriggerCharacters: false,
+                        snippetSuggestions: 'none',
+                        wordBasedSuggestions: 'off',
+                        hover: { enabled: false },
+                        renderValidationDecorations: 'off',
+                        lineHeight: settings.fontSize * settings.lineHeight,
+                        minimap: { enabled: settings.showMinimap },
+                        renderWhitespace: settings.renderWhitespace ? 'all' : 'none',
+                        renderLineHighlight: 'line',
+                      }}
                     />
                   </div>
                 </div>
@@ -1197,7 +1406,7 @@ function App() {
                       userSelect: 'none',
                       flex: '0 0 4px',
                       opacity: isResizing ? 0.8 : 0.3,
-                      transition: 'opacity 0.2s'
+                      transition: 'opacity 0.2s',
                     }}
                     onMouseDown={handleResizeMouseDown}
                   />
@@ -1224,7 +1433,19 @@ function App() {
               </div>
 
               {/* ステータスバー */}
-              <StatusBar line={stats.line} column={stats.column} selectedChars={stats.selectedChars} totalLines={stats.lines} totalChars={stats.chars} currentLineChars={stats.currentLineChars} autoIndent={settings.autoIndent} showGenkoyoushiMode={settings.showGenkoyoushiMode} code={code} encoding={currentEncoding} lastSaveTime={lastSaveTime} />
+              <StatusBar
+                line={stats.line}
+                column={stats.column}
+                selectedChars={stats.selectedChars}
+                totalLines={stats.lines}
+                totalChars={stats.chars}
+                currentLineChars={stats.currentLineChars}
+                autoIndent={settings.autoIndent}
+                showGenkoyoushiMode={settings.showGenkoyoushiMode}
+                code={code}
+                encoding={currentEncoding}
+                lastSaveTime={lastSaveTime}
+              />
             </div>
           </React.Fragment>
         )}

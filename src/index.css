@@ -1,3 +1,8 @@
+/* Tailwind CSS - Kotoori アプリコンポーネント向け */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -31,7 +36,7 @@ body {
 .theme-vs-dark {
   --status-bg: #333333;
   --status-text: #cccccc;
-  --dialogue-color: #CE9178;
+  --dialogue-color: #ce9178;
   --editor-bg: #1e1e1e;
   --editor-fg: #d4d4d4;
   --editor-fg-secondary: #a0a0a0;
@@ -41,7 +46,7 @@ body {
   --item-selected-bg: #37373d;
   --accent-color: #007acc;
   --code-bg: rgba(255, 255, 255, 0.1);
-  --code-fg: #CE9178;
+  --code-fg: #ce9178;
   --blockquote-bg: rgba(0, 122, 204, 0.1);
   --table-header-bg: rgba(255, 255, 255, 0.05);
   --table-row-bg: rgba(255, 255, 255, 0.02);
@@ -67,57 +72,57 @@ body {
 }
 
 .theme-organic-note {
-  --status-bg: #F3E0D3;
-  --status-text: #4C352C;
-  --dialogue-color: #C39F8A;
-  --editor-bg: #F7D9B3;
-  --editor-fg: #563C30;
-  --editor-fg-secondary: #A77F69;
-  --sidebar-bg: #F7E6DC;
-  --border-color: #E6D2C4;
-  --item-hover-bg: #F9E7DE;
-  --item-selected-bg: #F2D7B8;
-  --accent-color: #C06345;
+  --status-bg: #f3e0d3;
+  --status-text: #4c352c;
+  --dialogue-color: #c39f8a;
+  --editor-bg: #f7d9b3;
+  --editor-fg: #563c30;
+  --editor-fg-secondary: #a77f69;
+  --sidebar-bg: #f7e6dc;
+  --border-color: #e6d2c4;
+  --item-hover-bg: #f9e7de;
+  --item-selected-bg: #f2d7b8;
+  --accent-color: #c06345;
   --code-bg: rgba(192, 96, 60, 0.06);
-  --code-fg: #A0542E;
+  --code-fg: #a0542e;
   --blockquote-bg: rgba(192, 96, 60, 0.1);
   --table-header-bg: rgba(192, 96, 60, 0.06);
   --table-row-bg: rgba(192, 96, 60, 0.03);
 }
 
 .theme-moonlight {
-  --status-bg: #191A24;
-  --status-text: #E0E4F5;
-  --dialogue-color: #82AAFF;
-  --editor-bg: #191A24;
-  --editor-fg: #E0E4F5;
-  --editor-fg-secondary: #A0B0E0;
-  --sidebar-bg: #1F202E;
-  --border-color: #363B54;
-  --item-hover-bg: #2A2C3F;
-  --item-selected-bg: #363B54;
-  --accent-color: #C9B27A;
+  --status-bg: #191a24;
+  --status-text: #e0e4f5;
+  --dialogue-color: #82aaff;
+  --editor-bg: #191a24;
+  --editor-fg: #e0e4f5;
+  --editor-fg-secondary: #a0b0e0;
+  --sidebar-bg: #1f202e;
+  --border-color: #363b54;
+  --item-hover-bg: #2a2c3f;
+  --item-selected-bg: #363b54;
+  --accent-color: #c9b27a;
   --code-bg: rgba(130, 170, 255, 0.1);
-  --code-fg: #82AAFF;
+  --code-fg: #82aaff;
   --blockquote-bg: rgba(130, 170, 255, 0.1);
   --table-header-bg: rgba(130, 170, 255, 0.05);
   --table-row-bg: rgba(130, 170, 255, 0.02);
 }
 
 .theme-nagaragawa {
-  --status-bg: #E8F3F1;
-  --status-text: #0D1F1F;
-  --dialogue-color: #8FB3B0;
-  --editor-bg: #E8F3F1;
-  --editor-fg: #2F4F4F;
-  --editor-fg-secondary: #6B8F8C;
-  --sidebar-bg: #DCECEC;
-  --border-color: #AFEEEE;
-  --item-hover-bg: #F0F9F8;
-  --item-selected-bg: #AFEEEE;
-  --accent-color: #008B8B;
+  --status-bg: #e8f3f1;
+  --status-text: #0d1f1f;
+  --dialogue-color: #8fb3b0;
+  --editor-bg: #e8f3f1;
+  --editor-fg: #2f4f4f;
+  --editor-fg-secondary: #6b8f8c;
+  --sidebar-bg: #dcecec;
+  --border-color: #afeeee;
+  --item-hover-bg: #f0f9f8;
+  --item-selected-bg: #afeeee;
+  --accent-color: #008b8b;
   --code-bg: rgba(0, 139, 139, 0.05);
-  --code-fg: #008B8B;
+  --code-fg: #008b8b;
   --blockquote-bg: rgba(0, 139, 139, 0.1);
   --table-header-bg: rgba(0, 139, 139, 0.05);
   --table-row-bg: rgba(0, 139, 139, 0.02);
@@ -125,18 +130,18 @@ body {
 
 .theme-katana {
   --status-bg: #262626;
-  --status-text: #E0E0E0;
-  --dialogue-color: #935A5A;
+  --status-text: #e0e0e0;
+  --dialogue-color: #935a5a;
   --editor-bg: #262626;
-  --editor-fg: #E0E0E0;
-  --editor-fg-secondary: #B0B0B0;
-  --sidebar-bg: #1F1F1F;
-  --border-color: #3C4C55;
-  --item-hover-bg: #2D2D2D;
-  --item-selected-bg: #3C4C55;
-  --accent-color: #D4AF37;
+  --editor-fg: #e0e0e0;
+  --editor-fg-secondary: #b0b0b0;
+  --sidebar-bg: #1f1f1f;
+  --border-color: #3c4c55;
+  --item-hover-bg: #2d2d2d;
+  --item-selected-bg: #3c4c55;
+  --accent-color: #d4af37;
   --code-bg: rgba(212, 175, 55, 0.1);
-  --code-fg: #D4AF37;
+  --code-fg: #d4af37;
   --blockquote-bg: rgba(212, 175, 55, 0.1);
   --table-header-bg: rgba(212, 175, 55, 0.05);
   --table-row-bg: rgba(212, 175, 55, 0.02);

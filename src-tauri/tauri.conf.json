@@ -1,0 +1,85 @@
+{
+  "productName": "Kotoori",
+  "version": "0.0.0",
+  "identifier": "com.kotoori.app",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:1420",
+    "beforeDevCommand": "pnpm dev",
+    "beforeBuildCommand": "pnpm build"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Kotoori",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 600,
+        "minHeight": 400,
+        "decorations": false,
+        "hiddenTitle": true,
+        "titleBarStyle": "Overlay",
+        "acceptFirstMouse": true,
+        "resizable": true,
+        "center": true
+      }
+    ],
+    "macOSPrivateApi": true,
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico",
+      "icons/icon.png"
+    ],
+    "resources": [],
+    "externalBin": [],
+    "category": "Utility",
+    "shortDescription": "日本語テキストエディタ",
+    "longDescription": "日本語編集に最適化されたデスクトップ向けテキストエディタ（Monaco Engine搭載）",
+    "macOS": {
+      "entitlements": null,
+      "exceptionDomain": "",
+      "frameworks": [],
+      "providerShortName": null,
+      "signingIdentity": null,
+      "dmg": {
+        "appPosition": {
+          "x": 180,
+          "y": 170
+        },
+        "applicationFolderPosition": {
+          "x": 480,
+          "y": 170
+        }
+      }
+    },
+    "windows": {
+      "wix": {
+        "language": "ja-JP"
+      },
+      "nsis": {
+        "installerIcon": "icons/icon.ico",
+        "sidebarImage": null,
+        "languages": ["Japanese"],
+        "startMenuFolder": "Kotoori"
+      }
+    }
+  },
+  "plugins": {
+    "sql": {
+      "preload": ["sqlite:history.db"]
+    },
+    "window-state": {
+      "stateFlags": "SIZE | POSITION | MAXIMIZED | FULLSCREEN | DECORATIONS | VISIBLE"
+    }
+  }
+}

@@ -1,7 +1,7 @@
 import React, { useMemo, useEffect, useState } from 'react';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
-// @ts-ignore
+// @ts-expect-error no type declarations
 import 'github-markdown-css';
 import './MarkdownPreview.css';
 
@@ -59,7 +59,6 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({
     // |文字《・》 -> <ruby>文字<rt>・</rt></ruby> (傍点)
     return text.replace(/\|([^｜《》\n]+)《([^｜《》\n]+)》/g, '<ruby>$1<rt>$2</rt></ruby>');
   };
-
 
   // MarkdownをHTMLに変換（行番号情報の埋め込みを含む）
   const htmlContent = useMemo(() => {
@@ -154,21 +153,21 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({
         // scrollLeft は通常負の値や右端が基準になることがあるが、ブラウザ実装により異なる。
         // ここでは単純な位置計算を試みる。
         const relativeLeft = elementRect.left - containerRect.left + previewElement.scrollLeft;
-        const targetScrollLeft = relativeLeft - (containerRect.width / 2) + (elementRect.width / 2);
+        const targetScrollLeft = relativeLeft - containerRect.width / 2 + elementRect.width / 2;
 
         previewElement.scrollTo({
           left: targetScrollLeft,
-          behavior: 'smooth'
+          behavior: 'smooth',
         });
       } else {
         const containerRect = previewElement.getBoundingClientRect();
         const elementRect = (targetElement as HTMLElement).getBoundingClientRect();
         const relativeTop = elementRect.top - containerRect.top + previewElement.scrollTop;
-        const targetScrollTop = relativeTop - (containerRect.height / 2) + (elementRect.height / 2);
+        const targetScrollTop = relativeTop - containerRect.height / 2 + elementRect.height / 2;
 
         previewElement.scrollTo({
           top: Math.max(0, targetScrollTop),
-          behavior: 'smooth'
+          behavior: 'smooth',
         });
       }
     }
@@ -178,18 +177,24 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({
     return null;
   }
 
-  const verticalStyle: React.CSSProperties = previewMode === 'vertical' ? {
-    height: `${verticalCharsPerLine * lineHeight}em`,
-    lineBreak: verticalKinsoku ? 'strict' : 'auto',
-    wordBreak: 'break-all',
-    fontFamily: `${verticalFontFamily}, serif`,
-    fontSize: `${verticalFontSize}px`,
-  } : {};
+  const verticalStyle: React.CSSProperties =
+    previewMode === 'vertical'
+      ? {
+          height: `${verticalCharsPerLine * lineHeight}em`,
+          lineBreak: verticalKinsoku ? 'strict' : 'auto',
+          wordBreak: 'break-all',
+          fontFamily: `${verticalFontFamily}, serif`,
+          fontSize: `${verticalFontSize}px`,
+        }
+      : {};
 
-  const nonVerticalStyle: React.CSSProperties = previewMode !== 'vertical' ? {
-    fontSize: `${fontSize}px`,
-    lineHeight: `${lineHeight}em`,
-  } : {};
+  const nonVerticalStyle: React.CSSProperties =
+    previewMode !== 'vertical'
+      ? {
+          fontSize: `${fontSize}px`,
+          lineHeight: `${lineHeight}em`,
+        }
+      : {};
 
   return (
     <div
