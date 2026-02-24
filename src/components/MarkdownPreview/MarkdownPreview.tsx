@@ -1,7 +1,6 @@
 import React, { useMemo, useEffect, useState } from 'react';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
-// @ts-expect-error no type declarations
 import 'github-markdown-css';
 import './MarkdownPreview.css';
 
