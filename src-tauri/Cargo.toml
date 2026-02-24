@@ -1,6 +1,6 @@
 [package]
 name = "kotoori"
-version = "1.0.7"
+version = "1.0.6"
 description = "日本語編集に最適化されたデスクトップ向けテキストエディタ（Monaco搭載）"
 authors = []
 license = "MIT"

@@ -1,6 +1,6 @@
 {
   "productName": "Kotoori",
-  "version": "1.0.7",
+  "version": "1.0.6",
   "identifier": "com.kotoori.app",
   "build": {
     "frontendDist": "../dist",
