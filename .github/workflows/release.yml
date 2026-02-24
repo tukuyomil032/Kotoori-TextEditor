@@ -120,6 +120,6 @@ jobs:
             - **macOS Intel**: `*_x64.dmg`
             - **macOS Universal**: `*_universal.dmg`
             - **Windows**: `*_x64-setup.exe` / `*_x64_en-US.msi`
-          releaseDraft: true
+          releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
